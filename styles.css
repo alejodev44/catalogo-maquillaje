@@ -724,3 +724,24 @@ td select {
   text-decoration: line-through;
   opacity: .7;
 }
+/* Asegurar que hidden funciona */
+[hidden] {
+  display: none !important;
+}
+
+.admin-locked .auth-lock {
+  display: flex;
+}
+
+.admin-locked .admin-shell {
+  display: none;
+}
+
+/* Cuando se desbloquea */
+body:not(.admin-locked) .auth-lock {
+  display: none !important;
+}
+
+body:not(.admin-locked) .admin-shell {
+  display: flex;
+}
