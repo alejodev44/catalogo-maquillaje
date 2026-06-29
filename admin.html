@@ -185,15 +185,14 @@
       }
 
       // ─── UNLOCK & INIT ────────────────────────────────────────────────────────
-      function unlockAdmin() {
-        log("AUTH", "Desbloqueando admin...");
-        document.body.classList.remove("admin-locked");
-        authLock.setAttribute("hidden", "");
-        sessionStorage.setItem("catalogo-admin-ok", "true");
-        log("AUTH", "✅ Admin desbloqueado, iniciando carga...");
-        init();
-      }
-
+function unlockAdmin() {
+  document.body.classList.remove("admin-locked");
+  authLock.style.display = "none";  // ← FUERZA display:none con JS
+  authLock.setAttribute("hidden", "");
+  sessionStorage.setItem("catalogo-admin-ok", "true");
+  log("AUTH", "✅ Admin desbloqueado, iniciando carga...");
+  init();
+}
       function tryUnlock() {
         if (pinInput.value === ADMIN_PIN) {
           log("AUTH", "PIN correcto");
