@@ -16,8 +16,8 @@
         <h1>Ingresa tu PIN</h1>
         <p class="help">Este panel es solo para administrar precios, visibilidad y actualizaciones del catálogo.</p>
         <div class="field">
-          <label for="pinInput">PIN administrador</label>
-          <input id="pinInput" type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN">
+<label for="pinInput">PIN administrador</label>
+<input id="pinInput" type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN">
         </div>
         <button class="button primary" id="unlockBtn">Entrar</button>
         <p class="help auth-error" id="authError"></p>
@@ -193,16 +193,33 @@ function unlockAdmin() {
   log("AUTH", "✅ Admin desbloqueado, iniciando carga...");
   init();
 }
-      function tryUnlock() {
-        if (pinInput.value === ADMIN_PIN) {
-          log("AUTH", "PIN correcto");
-          unlockAdmin();
-          return;
-        }
-        log("AUTH", "❌ PIN incorrecto:", pinInput.value);
-        authError.textContent = "PIN incorrecto.";
-        pinInput.select();
-      }
+async function tryUnlock() {
+  const email = "alejo.dev44@gmail.com";  // ← ESTE CAMBIO
+  const password = pinInput.value;
+  
+  pinInput.disabled = true;
+  unlockBtn.disabled = true;
+  unlockBtn.textContent = "Validando...";
+  
+  try {
+    const { data, error } = await SupabaseDB.getClient().auth.signInWithPassword({
+      email,
+      password
+    });
+    
+    if (error) throw error;
+    
+    log("AUTH", "✅ Autenticación exitosa");
+    unlockAdmin();
+  } catch (error) {
+    log("AUTH", "❌ Credenciales inválidas:", error.message);
+    authError.textContent = "Contraseña incorrecta.";
+    pinInput.select();
+    pinInput.disabled = false;
+    unlockBtn.disabled = false;
+    unlockBtn.textContent = "Entrar";
+  }
+}
 
       // ─── FUNCIONES DE TABLA ────────────────────────────────────────────────────
       function boolSelect(value, field, index) {
