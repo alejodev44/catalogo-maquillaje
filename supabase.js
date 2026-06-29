@@ -141,7 +141,7 @@ const BASE = "https://cors-anywhere.herokuapp.com/https://kromaspace.com/wp-json
 
 async function sincronizarVariaciones(existentes) {
   const db = getClient();
-  const BASE = "https://cors-anywhere.herokuapp.com/https://kromaspace.com/wp-json/wc/store/v1/products";
+ const BASE = "https://api.allorigins.win/raw?url=https://kromaspace.com/wp-json/wc/store/v1/products";
   let pagina = 1, totalPaginas = 1;
   const variaciones = [];
 
