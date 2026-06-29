@@ -456,14 +456,19 @@ async function tryUnlock() {
         syncKromaBtn.textContent = "Sincronizando...";
         
         try {
-          const resultado = await SupabaseDB.sincronizarKroma();
-          log("SYNC", `✅ Sincronización completada:`, resultado);
-          alert(`✅ Sincronización completa.\n${resultado.actualizados} actualizados · ${resultado.nuevos} nuevos productos.`);
-          
-          log("SYNC", "Recargar productos...");
-          products = await CatalogData.loadProducts({ mode: "admin" });
-          setupAdminBrands();
-          renderRows();
+          const FUNCTION_URL = "https://yfixlfxpqcjkjdhqahze.supabase.co/functions/v1/sincronizar-kroma";
+const { data: { session } } = await SupabaseDB.getClient().auth.getSession();
+
+const res = await fetch(FUNCTION_URL, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${session.access_token}`
+  }
+});
+
+if (!res.ok) throw new Error(`Error ${res.status}`);
+const resultado = await res.json();
           
         } catch (err) {
           log("ERROR", "Fallo en sincronización:", err.message);
