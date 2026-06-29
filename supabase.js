@@ -81,7 +81,7 @@ async function sincronizarKroma() {
   const { data: actuales } = await db.from("productos").select("id, proveedor_id");
   const existentes = new Map((actuales || []).map(p => [String(p.proveedor_id), p.id]));
 
-  const BASE = "https://kromaspace.com/wp-json/wc/store/v1/products";
+const BASE = "https://cors-anywhere.herokuapp.com/https://kromaspace.com/wp-json/wc/store/v1/products";
   let pagina = 1, totalPaginas = 1;
   const nuevos = [], actualizaciones = [];
 
@@ -141,7 +141,7 @@ async function sincronizarKroma() {
 
 async function sincronizarVariaciones(existentes) {
   const db = getClient();
-  const BASE = "https://kromaspace.com/wp-json/wc/store/v1/products";
+  const BASE = "https://cors-anywhere.herokuapp.com/https://kromaspace.com/wp-json/wc/store/v1/products";
   let pagina = 1, totalPaginas = 1;
   const variaciones = [];
 
