@@ -555,40 +555,58 @@ h1 {
 }
 
 .table-wrap {
-  overflow-x: auto;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: auto;
+    position: relative;
 }
 
 table {
-  width: 100%;
-  min-width: 980px;
-  border-collapse: collapse;
-  background: white;
+    width: 100%;
+    min-width: 980px;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #fff;
+}
+
+thead {
+    position: sticky;
+    top: 69px;
+    z-index: 20;
+}
+
+thead th {
+    position: sticky;
+    top: 69px;
+    z-index: 21;
+    background: #fff4f8;
+    color: var(--accent-dark);
+    font-size: 12px;
+    text-transform: uppercase;
+    padding: 10px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+}
+
+tbody td {
+    padding: 10px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+    background: #fff;
 }
 
 th,
 td {
-  padding: 10px;
-  border-bottom: 1px solid var(--line);
-  text-align: left;
-  vertical-align: top;
-}
-
-th {
-  position: sticky;
-  top: 69px;
-  background: #fff4f8;
-  color: var(--accent-dark);
-  font-size: 12px;
-  text-transform: uppercase;
+    text-align: left;
 }
 
 td input,
 td select {
-  width: 100%;
-  min-width: 105px;
-  padding: 7px 8px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
+    width: 100%;
+    min-width: 105px;
+    padding: 7px 8px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
 }
 
 .pill {
