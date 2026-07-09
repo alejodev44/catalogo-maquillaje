@@ -147,29 +147,32 @@ const brands = getSortedBrands();
         return index === -1 ? 999 : index;
       }
 
+      function normMarca(marca) {
+        return marca && String(marca).trim() ? marca : "Sin marca";
+      }
+
       function getSortedBrands() {
-        return [...new Set(products.map((item) => item.marca).filter(Boolean))]
+        return [...new Set(products.map((item) => normMarca(item.marca)))]
           .sort((a, b) => brandRank(a) - brandRank(b) || a.localeCompare(b));
       }
 
       function getProductScore(product) {
-        return brandRank(product.marca) * 100000
+        return brandRank(normMarca(product.marca)) * 100000
           + (product.mi_precio > 0 ? 0 : 10000)
           + (product.disponible_proveedor ? 0 : 5000);
       }
 
       function getBrandImage(brand) {
-        const product = products.find((item) => item.marca === brand && item.imagen);
+        const product = products.find((item) => normMarca(item.marca) === brand && item.imagen);
         return product?.imagen || "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=600&q=80";
       }
 
       function getBrandCount(brand) {
-        return products.filter((item) => item.marca === brand && item.mostrar_en_catalogo && item.disponible_proveedor).length;
+        return products.filter((item) => normMarca(item.marca) === brand && item.mostrar_en_catalogo && item.disponible_proveedor).length;
       }
 
       function renderBrandRail(brands) {
-        const featured = brands.filter((brand) => brand !== "Sin marca");
-        brandRail.innerHTML = featured.map((brand, index) => `
+        brandRail.innerHTML = brands.map((brand, index) => `
           <button class="brand-tile" data-brand="${brand}">
             <img src="${getBrandImage(brand)}" alt="${brand}" loading="lazy">
             <span>${String(index + 1).padStart(2, "0")}</span>
@@ -250,7 +253,7 @@ const brands = getSortedBrands();
         const chosenBrand = brandFilter.value;
         const sorted = products
           .filter((product) => product.mostrar_en_catalogo && product.disponible_proveedor)
-          .filter((product) => !chosenBrand || product.marca === chosenBrand)
+          .filter((product) => !chosenBrand || normMarca(product.marca) === chosenBrand)
           .filter((product) => {
             const haystack = `${product.nombre} ${product.marca}`.toLowerCase();
             return !query || haystack.includes(query);
