@@ -35,10 +35,10 @@ async function fetchProducts({ soloVisibles = false } = {}) {
   return all;
 }
 
-async function saveProduct({ id, mi_precio, precio_referencia, mostrar_en_catalogo, notas }) {
+async function saveProduct({ id, mi_precio, precio_referencia, mostrar_en_catalogo, notas, disponible_proveedor }) {
   const db = getClient();
   const { error } = await db.from("productos")
-    .update({ mi_precio, precio_referencia, mostrar_en_catalogo, notas })
+    .update({ mi_precio, precio_referencia, mostrar_en_catalogo, notas, disponible_proveedor })
     .eq("id", id);
   if (error) throw error;
 }
@@ -57,7 +57,8 @@ async function saveAllProducts(products) {
           mi_precio: p.mi_precio || 0,
           precio_referencia: p.precio_referencia || 0,
           mostrar_en_catalogo: p.mostrar_en_catalogo || false,
-          notas: p.notas || ""
+          notas: p.notas || "",
+          disponible_proveedor: p.disponible_proveedor ?? true
         })
         .eq("id", p.id);
       if (error) console.error(`Error guardando ${p.id}:`, error.message);
