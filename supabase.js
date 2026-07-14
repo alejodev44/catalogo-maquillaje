@@ -236,3 +236,18 @@ window.SupabaseDB = {
   sincronizarKroma,
   getClient
 };
+// ── SINCRONIZACIÓN KROMA ──────────────────────────────────────────────────
+window.SupabaseSync = {
+  async sincronizar(modo) {
+    const res = await fetch("https://yfixlfxpqcjkjdhqahze.supabase.co/functions/v1/sincronizar-kroma", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ modo })
+    });
+    
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "Error desconocido");
+    return data;
+  }
+};
