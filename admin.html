@@ -41,8 +41,11 @@
         <div class="sync-dropdown" id="syncDropdown">
           <button class="button ghost" id="syncKromaBtn">↻ Sincronizar Kroma ▾</button>
           <div class="sync-menu" id="syncMenu" hidden>
-            <button class="sync-option" data-modo="stock">⚡ Stock rápido — solo disponibilidad (~20s)</button>
-            <button class="sync-option" data-modo="completo">🔄 Sincronización completa — todo (~3 min)</button>
+            <div style="display: flex; gap: 8px;">
+  <button class="button ghost" id="syncProductosBtn">📦 Productos</button>
+  <button class="button ghost" id="syncDisponibilidadBtn">⚡ Stock</button>
+  <button class="button ghost" id="syncTonosBtn">🎨 Tonos</button>
+</div>
           </div>
         </div>
         <button class="button primary" id="saveBtn">Guardar cambios</button>
