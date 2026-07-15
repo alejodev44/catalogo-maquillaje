@@ -1,0 +1,491 @@
+﻿<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AMSI Beauty | Catalogo</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="./index.html" aria-label="AMSI Beauty">
+        <img src="./amsi-logo.png" alt="Logo AMSI Beauty">
+        <div>
+          <p class="brand-name">AMSI Beauty</p>
+          <p class="brand-subtitle">Maquillaje seleccionado para ti</p>
+        </div>
+      </a>
+      <div class="header-actions">
+        <a class="btn secondary" href="./admin.html">Admin</a>
+        <button class="btn gold" id="openCart" type="button">Carrito <span id="cartCount">0</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Catalogo online</p>
+          <h1>AMSI Beauty</h1>
+          <p>Explora productos disponibles, elige tus tonos favoritos y arma tu pedido por WhatsApp en pocos clics.</p>
+        </div>
+        <div class="hero-panel" aria-hidden="true">
+          <img src="./amsi-logo.png" alt="">
+        </div>
+      </div>
+    </section>
+
+    <section class="container filters" aria-label="Filtros del catalogo">
+      <div class="field">
+        <label for="searchInput">Buscar</label>
+        <input id="searchInput" type="search" placeholder="Nombre del producto">
+      </div>
+      <div class="field">
+        <label for="categoryFilter">Categoria</label>
+        <select id="categoryFilter">
+          <option value="">Todas</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="brandFilter">Marca</label>
+        <select id="brandFilter">
+          <option value="">Todas</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="container catalog-status">
+      <span id="resultSummary">Cargando productos...</span>
+      <button class="btn secondary" id="clearFilters" type="button">Limpiar filtros</button>
+    </section>
+
+    <section class="container product-grid" id="productGrid" aria-live="polite"></section>
+  </main>
+
+  <div class="detail-overlay" id="detailOverlay"></div>
+  <section class="detail-modal" id="detailModal" aria-label="Detalle del producto" aria-modal="true">
+    <button class="btn secondary icon detail-close" id="closeDetail" type="button" aria-label="Cerrar detalle">x</button>
+    <div id="detailContent"></div>
+  </section>
+
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <aside class="cart-panel" id="cartPanel" aria-label="Carrito">
+    <div class="cart-head">
+      <h2>Tu pedido</h2>
+      <button class="btn secondary icon" id="closeCart" type="button" aria-label="Cerrar carrito">x</button>
+    </div>
+    <div class="cart-items" id="cartItems"></div>
+    <div class="cart-footer">
+      <p class="cart-total"><span>Total</span><strong id="cartTotal">$0</strong></p>
+      <a class="btn gold" id="whatsappOrder" target="_blank" rel="noreferrer">Pedir por WhatsApp</a>
+    </div>
+  </aside>
+
+  <a class="btn wa-float" href="https://wa.me/573001234567" target="_blank" rel="noreferrer" aria-label="WhatsApp">W</a>
+
+  <script type="module">
+    import { fetchProducts, fetchVariacionesBatch } from "./supabase.js";
+    import { formatMoney, getSalePrice, normalizeProduct } from "./app.js";
+
+    const WHATSAPP_NUMBER = "573001234567";
+    const state = {
+      products: [],
+      variationsByProduct: new Map(),
+      cart: []
+    };
+
+    const els = {
+      grid: document.querySelector("#productGrid"),
+      search: document.querySelector("#searchInput"),
+      category: document.querySelector("#categoryFilter"),
+      brand: document.querySelector("#brandFilter"),
+      summary: document.querySelector("#resultSummary"),
+      clear: document.querySelector("#clearFilters"),
+      openCart: document.querySelector("#openCart"),
+      closeCart: document.querySelector("#closeCart"),
+      cartPanel: document.querySelector("#cartPanel"),
+      cartOverlay: document.querySelector("#cartOverlay"),
+      cartItems: document.querySelector("#cartItems"),
+      cartCount: document.querySelector("#cartCount"),
+      cartTotal: document.querySelector("#cartTotal"),
+      whatsappOrder: document.querySelector("#whatsappOrder"),
+      detailOverlay: document.querySelector("#detailOverlay"),
+      detailModal: document.querySelector("#detailModal"),
+      detailContent: document.querySelector("#detailContent"),
+      closeDetail: document.querySelector("#closeDetail")
+    };
+
+    boot();
+
+    async function boot() {
+      try {
+        state.products = (await fetchProducts({ soloVisibles: true })).map(normalizeProduct);
+        const variations = await fetchVariacionesBatch(state.products.map((product) => product.id));
+        state.variationsByProduct = groupBy(variations, "producto_id");
+        if (!state.products.length) useDemoCatalog("Catalogo demo listo para probar.");
+        fillFilters();
+        renderProducts();
+        renderCart();
+      } catch (error) {
+        console.error(error);
+        useDemoCatalog("Modo demo: no se pudo conectar a Supabase.");
+        fillFilters();
+        renderProducts();
+        renderCart();
+      }
+    }
+
+    els.search.addEventListener("input", renderProducts);
+    els.category.addEventListener("change", renderProducts);
+    els.brand.addEventListener("change", renderProducts);
+    els.clear.addEventListener("click", () => {
+      els.search.value = "";
+      els.category.value = "";
+      els.brand.value = "";
+      renderProducts();
+    });
+    els.openCart.addEventListener("click", openCart);
+    els.closeCart.addEventListener("click", closeCart);
+    els.cartOverlay.addEventListener("click", closeCart);
+    els.closeDetail.addEventListener("click", closeDetail);
+    els.detailOverlay.addEventListener("click", closeDetail);
+
+    function fillFilters() {
+      const categories = unique(state.products.map((product) => product.categoria));
+      const brands = unique(state.products.map((product) => product.marca));
+
+      els.category.innerHTML = `<option value="">Todas</option>${categories.map(option).join("")}`;
+      els.brand.innerHTML = `<option value="">Todas</option>${brands.map(option).join("")}`;
+    }
+
+    function renderProducts() {
+      const search = normalizeText(els.search.value);
+      const category = els.category.value;
+      const brand = els.brand.value;
+      const products = state.products.filter((product) => {
+        const matchesSearch = normalizeText(product.nombre).includes(search);
+        const matchesCategory = !category || product.categoria === category;
+        const matchesBrand = !brand || product.marca === brand;
+        return matchesSearch && matchesCategory && matchesBrand;
+      });
+
+      els.summary.textContent = `${products.length} producto${products.length === 1 ? "" : "s"} disponible${products.length === 1 ? "" : "s"}`;
+
+      if (!products.length) {
+        els.grid.innerHTML = `<div class="empty-state">No hay productos con esos filtros.</div>`;
+        return;
+      }
+
+      els.grid.innerHTML = products.map(productCard).join("");
+      els.grid.querySelectorAll("[data-add]").forEach((button) => {
+        button.addEventListener("click", () => addToCart(button.dataset.add));
+      });
+      els.grid.querySelectorAll("[data-detail]").forEach((button) => {
+        button.addEventListener("click", () => openDetail(button.dataset.detail));
+      });
+    }
+
+    function productCard(product) {
+      const tones = state.variationsByProduct.get(product.id) || [];
+      const toneHtml = tones.length
+        ? tones.slice(0, 6).map(tonePill).join("") + (tones.length > 6 ? `<span class="tone-pill">+${tones.length - 6}</span>` : "")
+        : `<span class="tone-pill">Sin tonos</span>`;
+      const description = product.descripcion_corta || product.notas || "Producto de maquillaje disponible en AMSI Beauty.";
+
+      return `
+        <article class="product-card">
+          <figure>${product.imagen ? `<img src="${escapeAttr(product.imagen)}" alt="${escapeAttr(product.nombre)}" loading="lazy">` : ""}</figure>
+          <div class="product-body">
+            <div class="product-meta"><span>${escapeHtml(product.marca)}</span><span>${escapeHtml(product.categoria)}</span></div>
+            <h2>${escapeHtml(product.nombre)}</h2>
+            <p class="product-desc">${escapeHtml(description)}</p>
+            <div class="stock-row ${product.disponible_proveedor ? "in" : "out"}">
+              <span>${product.disponible_proveedor ? "Disponible" : "Agotado"}</span>
+              <strong>${escapeHtml(stockLabel(product))}</strong>
+            </div>
+            <div class="product-price">${formatMoney(getSalePrice(product))}</div>
+            <p class="section-label">Tonos</p>
+            <div class="tone-list">${toneHtml}</div>
+            <div class="product-actions">
+              <button class="btn secondary" data-detail="${escapeAttr(product.id)}" type="button">Ver detalle</button>
+              <button class="btn" data-add="${escapeAttr(product.id)}" type="button">Agregar</button>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function openDetail(productId) {
+      const product = state.products.find((item) => item.id === productId);
+      if (!product) return;
+
+      const tones = state.variationsByProduct.get(product.id) || [];
+      const description = product.descripcion_corta || product.notas || "Producto disponible para pedido por WhatsApp.";
+      const toneHtml = tones.length
+        ? tones.map(tonePill).join("")
+        : `<span class="tone-pill">Sin tonos registrados</span>`;
+
+      els.detailContent.innerHTML = `
+        <article class="detail-grid">
+          <figure class="detail-image">${product.imagen ? `<img src="${escapeAttr(product.imagen)}" alt="${escapeAttr(product.nombre)}">` : ""}</figure>
+          <div class="detail-info">
+            <div class="product-meta"><span>${escapeHtml(product.marca)}</span><span>${escapeHtml(product.categoria)}</span></div>
+            <h2>${escapeHtml(product.nombre)}</h2>
+            <p class="detail-price">${formatMoney(getSalePrice(product))}</p>
+            <div class="stock-row ${product.disponible_proveedor ? "in" : "out"}">
+              <span>${product.disponible_proveedor ? "Disponible" : "Agotado"}</span>
+              <strong>${escapeHtml(stockLabel(product))}</strong>
+            </div>
+            <p class="section-label">Descripcion</p>
+            <p class="detail-desc">${escapeHtml(description)}</p>
+            <p class="section-label">Tonos disponibles y agotados</p>
+            <div class="tone-list detail-tones">${toneHtml}</div>
+            <button class="btn gold" data-add="${escapeAttr(product.id)}" type="button">Agregar al carrito</button>
+          </div>
+        </article>
+      `;
+
+      els.detailContent.querySelector("[data-add]").addEventListener("click", () => addToCart(product.id));
+      els.detailModal.classList.add("open");
+      els.detailOverlay.classList.add("open");
+    }
+
+    function closeDetail() {
+      els.detailModal.classList.remove("open");
+      els.detailOverlay.classList.remove("open");
+    }
+
+    function addToCart(productId) {
+      const product = state.products.find((item) => item.id === productId);
+      if (!product) return;
+
+      const tones = state.variationsByProduct.get(product.id) || [];
+      const availableTone = tones.find((tone) => tone.disponible) || tones[0] || null;
+
+      state.cart.push({
+        key: crypto.randomUUID(),
+        productId,
+        toneId: availableTone?.id || "",
+        quantity: 1
+      });
+
+      renderCart();
+      openCart();
+    }
+
+    function renderCart() {
+      const totalItems = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+      const total = state.cart.reduce((sum, item) => {
+        const product = state.products.find((row) => row.id === item.productId);
+        return sum + getSalePrice(product) * item.quantity;
+      }, 0);
+
+      els.cartCount.textContent = totalItems;
+      els.cartTotal.textContent = formatMoney(total);
+
+      if (!state.cart.length) {
+        els.cartItems.innerHTML = `<div class="empty-state">Tu carrito esta vacio.</div>`;
+      } else {
+        els.cartItems.innerHTML = state.cart.map(cartItem).join("");
+      }
+
+      els.cartItems.querySelectorAll("[data-remove]").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.cart = state.cart.filter((item) => item.key !== button.dataset.remove);
+          renderCart();
+        });
+      });
+
+      els.cartItems.querySelectorAll("[data-tone]").forEach((select) => {
+        select.addEventListener("change", () => {
+          const item = state.cart.find((row) => row.key === select.dataset.tone);
+          if (item) item.toneId = select.value;
+          updateWhatsappLink();
+        });
+      });
+
+      els.cartItems.querySelectorAll("[data-qty]").forEach((input) => {
+        input.addEventListener("input", () => {
+          const item = state.cart.find((row) => row.key === input.dataset.qty);
+          if (item) item.quantity = Math.max(1, Number(input.value || 1));
+          renderCart();
+        });
+      });
+
+      updateWhatsappLink();
+    }
+
+    function cartItem(item) {
+      const product = state.products.find((row) => row.id === item.productId);
+      const tones = state.variationsByProduct.get(product.id) || [];
+      const toneOptions = tones.map((tone) => `<option value="${escapeAttr(tone.id)}" ${tone.id === item.toneId ? "selected" : ""} ${tone.disponible ? "" : "disabled"}>${escapeHtml(tone.tono || "Tono")}${tone.disponible ? "" : " - agotado"}</option>`).join("");
+
+      return `
+        <article class="cart-item">
+          <div class="cart-item-top">
+            <img src="${escapeAttr(product.imagen)}" alt="">
+            <div>
+              <h3>${escapeHtml(product.nombre)}</h3>
+              <p>${formatMoney(getSalePrice(product))}</p>
+            </div>
+            <button class="btn secondary icon" data-remove="${escapeAttr(item.key)}" type="button" aria-label="Eliminar">x</button>
+          </div>
+          <div class="cart-controls">
+            ${tones.length ? `<select data-tone="${escapeAttr(item.key)}">${toneOptions}</select>` : `<select disabled><option>Sin tono</option></select>`}
+            <input data-qty="${escapeAttr(item.key)}" type="number" min="1" value="${item.quantity}" aria-label="Cantidad">
+          </div>
+        </article>
+      `;
+    }
+
+    function updateWhatsappLink() {
+      const lines = ["Hola AMSI Beauty, quiero hacer este pedido:", ""];
+
+      state.cart.forEach((item, index) => {
+        const product = state.products.find((row) => row.id === item.productId);
+        const tones = state.variationsByProduct.get(product.id) || [];
+        const tone = tones.find((row) => row.id === item.toneId);
+        const subtotal = getSalePrice(product) * item.quantity;
+        lines.push(`${index + 1}. ${product.nombre}`);
+        lines.push(`   Marca: ${product.marca}`);
+        if (tone) lines.push(`   Tono: ${tone.tono}`);
+        lines.push(`   Cantidad: ${item.quantity}`);
+        lines.push(`   Precio: ${formatMoney(getSalePrice(product))}`);
+        lines.push(`   Subtotal: ${formatMoney(subtotal)}`);
+        lines.push("");
+      });
+
+      const total = state.cart.reduce((sum, item) => {
+        const product = state.products.find((row) => row.id === item.productId);
+        return sum + getSalePrice(product) * item.quantity;
+      }, 0);
+
+      lines.push(`Total: ${formatMoney(total)}`);
+      els.whatsappOrder.href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join("\n"))}`;
+      els.whatsappOrder.classList.toggle("secondary", state.cart.length === 0);
+    }
+
+    function openCart() {
+      els.cartPanel.classList.add("open");
+      els.cartOverlay.classList.add("open");
+    }
+
+    function closeCart() {
+      els.cartPanel.classList.remove("open");
+      els.cartOverlay.classList.remove("open");
+    }
+
+    function tonePill(tone) {
+      const stock = tone.stock_texto || (tone.stock ? `${tone.stock} un.` : "");
+      return `<span class="tone-pill ${tone.disponible ? "" : "out"}">${escapeHtml(tone.tono || "Tono")}${stock ? ` - ${escapeHtml(stock)}` : ""}</span>`;
+    }
+
+    function stockLabel(product) {
+      if (product.stock_texto) return product.stock_texto;
+      if (product.stock_proveedor > 0) return `${product.stock_proveedor} unidades`;
+      return product.disponible_proveedor ? "En stock" : "Sin stock";
+    }
+
+    function useDemoCatalog(message) {
+      state.products = demoProducts().map(normalizeProduct);
+      state.variationsByProduct = groupBy(demoVariations(), "producto_id");
+      els.summary.textContent = message;
+    }
+
+    function groupBy(items, key) {
+      return items.reduce((map, item) => {
+        const value = item[key];
+        if (!map.has(value)) map.set(value, []);
+        map.get(value).push(item);
+        return map;
+      }, new Map());
+    }
+
+    function unique(values) {
+      return [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    }
+
+    function option(value) {
+      return `<option value="${escapeAttr(value)}">${escapeHtml(value)}</option>`;
+    }
+
+    function normalizeText(value = "") {
+      return String(value).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    }
+
+    function escapeHtml(value = "") {
+      return String(value).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[char]);
+    }
+
+    function escapeAttr(value = "") {
+      return escapeHtml(value);
+    }
+
+    function demoProducts() {
+      return [
+        {
+          id: "demo-1",
+          nombre: "Labial Velvet Rose",
+          marca: "AMSI Selection",
+          categoria: "Labios",
+          imagen: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=900&q=80",
+          mi_precio: 32000,
+          disponible_proveedor: true,
+          stock_proveedor: 18,
+          stock_texto: "18 disponibles",
+          mostrar_en_catalogo: true,
+          descripcion_corta: "Labial cremoso de acabado velvet, color intenso y textura suave para uso diario."
+        },
+        {
+          id: "demo-2",
+          nombre: "Paleta de Sombras Nude Glow",
+          marca: "Kroma",
+          categoria: "Ojos",
+          imagen: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=900&q=80",
+          mi_precio: 68000,
+          disponible_proveedor: true,
+          stock_proveedor: 7,
+          stock_texto: "Pocas unidades",
+          mostrar_en_catalogo: true,
+          descripcion_corta: "Paleta con tonos mate y satinados para looks suaves, elegantes y faciles de combinar."
+        },
+        {
+          id: "demo-3",
+          nombre: "Base Liquida Soft Matte",
+          marca: "Beauty Pro",
+          categoria: "Rostro",
+          imagen: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=900&q=80",
+          mi_precio: 54000,
+          disponible_proveedor: true,
+          stock_proveedor: 11,
+          stock_texto: "En stock",
+          mostrar_en_catalogo: true,
+          descripcion_corta: "Base ligera de cobertura media con acabado natural, ideal para piel mixta."
+        }
+      ];
+    }
+
+    function demoVariations() {
+      return [
+        { id: "demo-var-1", producto_id: "demo-1", tono: "Rose Nude", disponible: true, stock: 6, stock_texto: "6" },
+        { id: "demo-var-2", producto_id: "demo-1", tono: "Cherry", disponible: true, stock: 4, stock_texto: "4" },
+        { id: "demo-var-3", producto_id: "demo-1", tono: "Moka", disponible: false, stock: 0, stock_texto: "agotado" },
+        { id: "demo-var-4", producto_id: "demo-2", tono: "Nude", disponible: true, stock: 3, stock_texto: "3" },
+        { id: "demo-var-5", producto_id: "demo-2", tono: "Bronze", disponible: true, stock: 4, stock_texto: "4" },
+        { id: "demo-var-6", producto_id: "demo-3", tono: "Light 02", disponible: true, stock: 5, stock_texto: "5" },
+        { id: "demo-var-7", producto_id: "demo-3", tono: "Medium 04", disponible: true, stock: 6, stock_texto: "6" },
+        { id: "demo-var-8", producto_id: "demo-3", tono: "Tan 06", disponible: false, stock: 0, stock_texto: "agotado" }
+      ];
+    }
+  </script>
+</body>
+</html>
