@@ -39,12 +39,9 @@
       <nav class="nav">
         <a href="./index.html">Ver catálogo</a>
         <div class="sync-dropdown" id="syncDropdown">
-          <button class="button ghost" id="syncKromaBtn">↻ Sincronizar Kroma ▾</button>
-          <div class="sync-menu" id="syncMenu" hidden>
-            <div style="display: flex; gap: 8px;">
-  <button class="button ghost" id="syncProductosBtn">📦 Productos</button>
-  <button class="button ghost" id="syncDisponibilidadBtn">⚡ Stock</button>
-  <button class="button ghost" id="syncTonosBtn">🎨 Tonos</button>
+<button class="button ghost" id="syncProductosBtn">📦 Productos</button>
+<button class="button ghost" id="syncDisponibilidadBtn">⚡ Stock</button>
+<button class="button ghost" id="syncTonosBtn">🎨 Tonos</button>
 </div>
           </div>
         </div>
@@ -480,85 +477,79 @@
       });
 
       // ─── DROPDOWN SINCRONIZAR ───────────────────────────────────────────────
-      const syncMenu = document.querySelector("#syncMenu");
+     // ─── BOTONES DE SINCRONIZACIÓN ──────────────────────────────────────────────
+const syncProductosBtn = document.querySelector("#syncProductosBtn");
+const syncDisponibilidadBtn = document.querySelector("#syncDisponibilidadBtn");
+const syncTonosBtn = document.querySelector("#syncTonosBtn");
 
-      syncKromaBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        syncMenu.hidden = !syncMenu.hidden;
-      });
-      document.addEventListener("click", () => { syncMenu.hidden = true; });
+syncProductosBtn?.addEventListener("click", async () => {
+  if (!confirm("¿Sincronizar TODOS los productos desde Kroma? (30-60 segundos)")) return;
+  syncProductosBtn.disabled = true;
+  syncProductosBtn.textContent = "Sincronizando...";
+  try {
+    const res = await fetch("https://yfixlfxpqcjkjdhqahze.supabase.co/functions/v1/sincronizar-kroma", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ modo: "productos" })
+    });
+    const resultado = await res.json();
+    if (!resultado.success) throw new Error(resultado.error);
+    alert(`✅ ${resultado.guardados} productos importados de ${resultado.total}`);
+    products = await CatalogData.loadProducts({ mode: "admin" });
+    setupAdminBrands();
+    renderRows();
+  } catch (err) {
+    alert(`❌ Error: ${err.message}`);
+  } finally {
+    syncProductosBtn.disabled = false;
+    syncProductosBtn.textContent = "📦 Productos";
+  }
+});
 
-      async function llamarEdgeFunction(body, timeoutMs = 150000) {
-        const FUNCTION_URL = "https://yfixlfxpqcjkjdhqahze.supabase.co/functions/v1/sincronizar-kroma";
-        const { data: { session } } = await SupabaseDB.getClient().auth.getSession();
-        const controller = new AbortController();
-        const tid = setTimeout(() => controller.abort(), timeoutMs);
-        const res = await fetch(FUNCTION_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
-          body: JSON.stringify(body),
-          signal: controller.signal
-        });
-        clearTimeout(tid);
-        if (!res.ok) throw new Error(`Error ${res.status}`);
-        return res.json();
-      }
+syncDisponibilidadBtn?.addEventListener("click", async () => {
+  if (!confirm("¿Actualizar disponibilidad en tiempo real? (15-20 segundos)")) return;
+  syncDisponibilidadBtn.disabled = true;
+  syncDisponibilidadBtn.textContent = "Sincronizando...";
+  try {
+    const res = await fetch("https://yfixlfxpqcjkjdhqahze.supabase.co/functions/v1/sincronizar-kroma", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ modo: "disponibilidad" })
+    });
+    const resultado = await res.json();
+    if (!resultado.success) throw new Error(resultado.error);
+    alert(`✅ Stock actualizado: ${resultado.sin_stock} productos sin existencias`);
+    products = await CatalogData.loadProducts({ mode: "admin" });
+    setupAdminBrands();
+    renderRows();
+  } catch (err) {
+    alert(`❌ Error: ${err.message}`);
+  } finally {
+    syncDisponibilidadBtn.disabled = false;
+    syncDisponibilidadBtn.textContent = "⚡ Stock";
+  }
+});
 
-      async function ejecutarSync(modo) {
-        syncKromaBtn.disabled = true;
-        try {
-          if (modo === "stock") {
-            syncKromaBtn.textContent = "⚡ Actualizando stock...";
-            log("SYNC", "Modo disponibilidad (rápido)...");
-            const r = await llamarEdgeFunction({ modo: "disponibilidad" });
-            log("SYNC", `✅ ${r.actualizados}/${r.total} productos actualizados, ${r.corregidos_html || 0} corregidos vía HTML`);
-            alert(`✅ Stock actualizado.\n${r.actualizados}/${r.total} productos sincronizados.\n🔍 ${r.corregidos_html || 0} productos corregidos a agotado (detección HTML).`);
-          } else {
-            syncKromaBtn.textContent = "📦 Sincronizando productos...";
-            log("SYNC", "Fase 1: productos...");
-            const r1 = await llamarEdgeFunction({ modo: "productos" });
-            log("SYNC", `✅ Productos: ${r1.guardados}/${r1.total}`);
-
-            syncKromaBtn.textContent = "🎨 Sincronizando tonos...";
-            let desde = 0, totalTonos = 0, bloques = 0;
-            while (true) {
-              const r2 = await llamarEdgeFunction({ modo: "tonos", desde });
-              totalTonos += r2.guardadas || 0;
-              bloques++;
-              syncKromaBtn.textContent = `🎨 Tonos ${r2.procesados}/${r2.total_con_variaciones}...`;
-              log("SYNC", `🎨 Bloque ${bloques}: ${r2.procesados}/${r2.total_con_variaciones} procesados`);
-              if (!r2.hay_mas) break;
-              desde = r2.siguiente_desde;
-            }
-            alert(`✅ Sincronización completa.\n📦 ${r1.guardados}/${r1.total} productos\n🎨 ${totalTonos} tonos`);
-          }
-
-          syncKromaBtn.textContent = "Recargando...";
-          products = await CatalogData.loadProducts({ mode: "admin" });
-          setupAdminBrands();
-          renderRows();
-
-        } catch (err) {
-          const msg = err.name === "AbortError" ? "Tardó demasiado. Intenta de nuevo." : err.message;
-          log("ERROR", "Fallo:", msg);
-          alert(`❌ Error: ${msg}`);
-        } finally {
-          syncKromaBtn.disabled = false;
-          syncKromaBtn.textContent = "↻ Sincronizar Kroma ▾";
-        }
-      }
-
-      document.querySelectorAll(".sync-option").forEach(btn => {
-        btn.addEventListener("click", () => {
-          syncMenu.hidden = true;
-          ejecutarSync(btn.dataset.modo);
-        });
-      });
-
-      unlockBtn.addEventListener("click", tryUnlock);
-      pinInput.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") tryUnlock();
-      });
+syncTonosBtn?.addEventListener("click", async () => {
+  if (!confirm("¿Sincronizar tonos y variaciones? (2-3 minutos)")) return;
+  syncTonosBtn.disabled = true;
+  syncTonosBtn.textContent = "Sincronizando...";
+  try {
+    const res = await fetch("https://yfixlfxpqcjkjdhqahze.supabase.co/functions/v1/sincronizar-kroma", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ modo: "tonos" })
+    });
+    const resultado = await res.json();
+    if (!resultado.success) throw new Error(resultado.error);
+    alert(`✅ ${resultado.variaciones_sincronizadas} tonos sincronizados de ${resultado.total_variaciones}`);
+  } catch (err) {
+    alert(`❌ Error: ${err.message}`);
+  } finally {
+    syncTonosBtn.disabled = false;
+    syncTonosBtn.textContent = "🎨 Tonos";
+  }
+});
 
       // ─── STARTUP ────────────────────────────────────────────────────────────
       log("STARTUP", "Admin panel cargando...");
