@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Administrar catálogo</title>
+    <link rel="stylesheet" href="./styles.css">
+    <style>
+      .sync-dropdown { position: relative; display: inline-block; }
+      .sync-menu { position: absolute; right: 0; top: calc(100% + 6px); background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.12); min-width: 290px; z-index: 100; overflow: hidden; }
+      .sync-option { display: block; width: 100%; text-align: left; padding: .75rem 1rem; font-size: .85rem; background: none; border: none; cursor: pointer; color: #374151; transition: background .15s; }
+      .sync-option:hover { background: #fdf2f8; color: #9f1239; }
+      .sync-option + .sync-option { border-top: 1px solid #f3f4f6; }
+    </style>
+  </head>
+  <body class="admin-page admin-locked">
+    <section class="auth-lock" id="authLock">
+      <div class="auth-box">
+        <div class="brand auth-brand">
+          <span class="brand-mark">M</span>
+          <span>Panel privado</span>
+        </div>
+        <h1>Inicia sesión</h1>
+        <p class="help">Este panel es solo para administrar precios, visibilidad y actualizaciones del catálogo.</p>
+        <div class="field">
+          <label for="emailInput">Correo</label>
+          <input id="emailInput" type="email" autocomplete="username" placeholder="tu@correo.com">
+        </div>
+        <div class="field">
+          <label for="pinInput">Contraseña</label>
+          <input id="pinInput" type="password" autocomplete="current-password" placeholder="Contraseña">
+        </div>
+        <button class="button primary" id="unlockBtn">Entrar</button>
+        <p class="help auth-error" id="authError"></p>
+      </div>
+    </section>
+
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">M</span>
+        <span>Panel de precios</span>
+      </div>
+      <nav class="nav">
+        <a href="./index.html">Ver catálogo</a>
+        <div class="sync-dropdown" id="syncDropdown">
+<button class="button ghost" id="syncProductosBtn">📦 Productos</button>
+<button class="button ghost" id="syncDisponibilidadBtn">⚡ Stock</button>
+<button class="button ghost" id="syncTonosBtn">🎨 Tonos</button>
+</div>
+          </div>
+        </div>
+        <button class="button primary" id="saveBtn">Guardar cambios</button>
+        <button class="button ghost" id="logoutBtn">Cerrar sesión</button>
+      </nav>
+    </header>
+
+    <main class="admin-shell">
+      <div class="admin-grid">
+        <aside class="panel">
+          <div class="panel-header">
+            <h1>Control de productos</h1>
+          </div>
+          <div class="panel-body">
+            <p class="help">Edita especialmente <strong>Mi precio</strong> y <strong>Mostrar</strong>. El precio mayorista queda como referencia del proveedor.</p>
+            <div class="stat-row">
+              <div class="stat">
+                <span class="help">Productos</span>
+                <strong id="totalProducts">0</strong>
+              </div>
+              <div class="stat">
+                <span class="help">Visibles</span>
+                <strong id="visibleProducts">0</strong>
+              </div>
+            </div>
+            <div class="stat-row">
+              <div class="stat">
+                <span class="help">Pendientes precio</span>
+                <strong id="pendingProducts">0</strong>
+              </div>
+              <div class="stat">
+                <span class="help">Sin stock</span>
+                <strong id="outProducts">0</strong>
+              </div>
+            </div>
+            <div class="field">
+              <label for="adminSearch">Buscar</label>
+              <input id="adminSearch" type="search" placeholder="Producto, marca, SKU o categoría">
+            </div>
+            <div class="field">
+              <label for="statusFilter">Estado</label>
+              <select id="statusFilter">
+                <option value="all">Todos</option>
+                <option value="pending">Pendientes de precio</option>
+                <option value="priced">Con precio</option>
+                <option value="visible">Visibles</option>
+                <option value="hidden">Ocultos</option>
+                <option value="out">Sin stock</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="adminBrandFilter">Marca</label>
+              <select id="adminBrandFilter">
+                <option value="">Todas</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="importFile">Importar CSV o JSON</label>
+              <input id="importFile" type="file" accept=".csv,.json,application/json,text/csv">
+            </div>
+            <div class="toolbar">
+              <button class="button" id="addBtn">Agregar producto</button>
+              <button class="button" id="showAvailableBtn">Mostrar disponibles</button>
+              <button class="button" id="hidePendingBtn">Ocultar sin precio</button>
+              <button class="button" id="exportCsvBtn">Exportar CSV</button>
+              <button class="button" id="exportExcelBtn">Exportar Excel</button>
+              <button class="button" id="exportJsonBtn">Exportar JSON</button>
+              <button class="button ghost" id="resetBtn">Restaurar demo</button>
+            </div>
+            <p class="help">Cuando se conecte con Kroma, los productos nuevos podrían entrar con <span class="pill">pendiente de precio</span> hasta que tú decidas el valor final.</p>
+          </div>
+        </aside>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Lista editable</h2>
+            <p class="help">80 filas por página. La exportación incluye todos los productos.</p>
+            <div class="toolbar" id="paginationControls" style="align-items:center; margin-top:8px;">
+              <button class="button" id="prevPageBtn">← Anterior</button>
+              <span class="help" id="pageIndicator">Página 1 de 1</span>
+              <button class="button" id="nextPageBtn">Siguiente →</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Producto</th>
+                  <th>Marca</th>
+                  <th>Categoría</th>
+                  <th>Mayorista</th>
+                  <th>Detal ref.</th>
+                  <th>Mi precio</th>
+                  <th>Disponible</th>
+                  <th>Mostrar</th>
+                  <th>Imagen</th>
+                  <th>Notas</th>
+                </tr>
+              </thead>
+              <tbody id="productRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="./supabase.js"></script>
+    <script src="./app.js"></script>
+    <script>
+      const rows = document.querySelector("#productRows");
+      const authLock = document.querySelector("#authLock");
+      const emailInput = document.querySelector("#emailInput");
+      const pinInput = document.querySelector("#pinInput");
+      const unlockBtn = document.querySelector("#unlockBtn");
+      const authError = document.querySelector("#authError");
+      const saveBtn = document.querySelector("#saveBtn");
+      const logoutBtn = document.querySelector("#logoutBtn");
+      const addBtn = document.querySelector("#addBtn");
+      const exportCsvBtn = document.querySelector("#exportCsvBtn");
+      const exportExcelBtn = document.querySelector("#exportExcelBtn");
+      const exportJsonBtn = document.querySelector("#exportJsonBtn");
+      const importFile = document.querySelector("#importFile");
+      const resetBtn = document.querySelector("#resetBtn");
+      const showAvailableBtn = document.querySelector("#showAvailableBtn");
+      const hidePendingBtn = document.querySelector("#hidePendingBtn");
+      const adminSearch = document.querySelector("#adminSearch");
+      const statusFilter = document.querySelector("#statusFilter");
+      const adminBrandFilter = document.querySelector("#adminBrandFilter");
+      const totalProducts = document.querySelector("#totalProducts");
+      const visibleProducts = document.querySelector("#visibleProducts");
+      const pendingProducts = document.querySelector("#pendingProducts");
+      const outProducts = document.querySelector("#outProducts");
+      const syncKromaBtn = document.querySelector("#syncKromaBtn");
+      const prevPageBtn = document.querySelector("#prevPageBtn");
+      const nextPageBtn = document.querySelector("#nextPageBtn");
+      const pageIndicator = document.querySelector("#pageIndicator");
+      let products = [];
+      let currentPage = 1;
+      const PAGE_SIZE = 80;
+
+      function normMarca(marca) {
+        return marca && String(marca).trim() ? marca : "Sin marca";
+      }
+
+      // ─── LOGGING & DEBUG ───────────────────────────────────────────────────────
+      function log(step, message, data = null) {
+        const timestamp = new Date().toLocaleTimeString();
+        const prefix = `[${timestamp}] ${step}`;
+        console.log(`%c${prefix}`, "color: #0066cc; font-weight: bold;", message, data || "");
+      }
+
+      // ─── VALIDACIÓN DE DEPENDENCIAS ────────────────────────────────────────────
+      function checkDependencies() {
+        log("DEPS", "Verificando dependencias...");
+        const missing = [];
+        if (!window.supabase) missing.push("Supabase SDK");
+        if (!window.SupabaseDB) missing.push("SupabaseDB");
+        if (!window.CatalogData) missing.push("CatalogData");
+        if (missing.length > 0) {
+          const error = `Librerías faltantes: ${missing.join(", ")}`;
+          log("ERROR", error);
+          throw new Error(error);
+        }
+        log("DEPS", "✅ Todas las dependencias cargadas");
+        return true;
+      }
+
+      // ─── UNLOCK & INIT ────────────────────────────────────────────────────────
+      function unlockAdmin() {
+        document.body.classList.remove("admin-locked");
+        authLock.style.display = "none";
+        authLock.setAttribute("hidden", "");
+        log("AUTH", "✅ Admin desbloqueado, iniciando carga...");
+        init();
+      }
+
+      async function tryUnlock() {
+        const email = emailInput.value.trim();
+        const password = pinInput.value;
+
+        if (!email || !password) {
+          authError.textContent = "Ingresa correo y contraseña.";
+          return;
+        }
+
+        emailInput.disabled = true;
+        pinInput.disabled = true;
+        unlockBtn.disabled = true;
+        unlockBtn.textContent = "Validando...";
+
+        try {
+          const { data, error } = await SupabaseDB.getClient().auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          log("AUTH", "✅ Autenticación exitosa");
+          unlockAdmin();
+        } catch (error) {
+          log("AUTH", "❌ Credenciales inválidas:", error.message);
+          authError.textContent = "Correo o contraseña incorrectos.";
+          pinInput.select();
+          emailInput.disabled = false;
+          pinInput.disabled = false;
+          unlockBtn.disabled = false;
+          unlockBtn.textContent = "Entrar";
+        }
+      }
+
+      async function checkSessionAndStart() {
+        log("STARTUP", "Verificando sesión de Supabase...");
+        try {
+          const { data } = await SupabaseDB.getClient().auth.getSession();
+          if (data?.session) {
+            log("STARTUP", "Sesión activa encontrada, desbloqueando...");
+            unlockAdmin();
+          } else {
+            log("STARTUP", "Sin sesión activa, esperando login...");
+            emailInput.focus();
+          }
+        } catch (error) {
+          log("STARTUP", "❌ Error verificando sesión:", error.message);
+          emailInput.focus();
+        }
+      }
+
+      logoutBtn?.addEventListener("click", async () => {
+        if (!confirm("¿Cerrar sesión del panel admin?")) return;
+        await SupabaseDB.getClient().auth.signOut();
+        window.location.reload();
+      });
+
+      // ─── FUNCIONES DE TABLA ────────────────────────────────────────────────────
+      function boolSelect(value, field, index) {
+        return `
+          <select data-field="${field}" data-index="${index}">
+            <option value="true" ${value ? "selected" : ""}>Sí</option>
+            <option value="false" ${!value ? "selected" : ""}>No</option>
+          </select>
+        `;
+      }
+
+      function input(value, field, index, type = "text") {
+        return `<input type="${type}" value="${String(value ?? "").replaceAll('"', "&quot;")}" data-field="${field}" data-index="${index}">`;
+      }
+
+      function renderRows() {
+        log("RENDER", "Renderizando filas...");
+        renderStatsOnly();
+        const query = adminSearch.value.trim().toLowerCase();
+        const status = statusFilter.value;
+        const chosenBrand = adminBrandFilter.value;
+        const allFiltered = products
+          .map((product, index) => ({ product, index }))
+          .filter(({ product }) => {
+            const haystack = `${product.id} ${product.sku || ""} ${product.nombre} ${product.marca} ${product.categoria}`.toLowerCase();
+            if (query && !haystack.includes(query)) return false;
+            if (chosenBrand && normMarca(product.marca) !== chosenBrand) return false;
+            if (status === "pending" && product.mi_precio > 0) return false;
+            if (status === "priced" && product.mi_precio <= 0) return false;
+            if (status === "visible" && !product.mostrar_en_catalogo) return false;
+            if (status === "hidden" && product.mostrar_en_catalogo) return false;
+            if (status === "out" && product.disponible_proveedor) return false;
+            return true;
+          });
+
+        const totalPages = Math.max(1, Math.ceil(allFiltered.length / PAGE_SIZE));
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const filtered = allFiltered.slice(start, start + PAGE_SIZE);
+
+        pageIndicator.textContent = `Página ${currentPage} de ${totalPages} (${allFiltered.length} productos)`;
+        prevPageBtn.disabled = currentPage <= 1;
+        nextPageBtn.disabled = currentPage >= totalPages;
+
+        rows.innerHTML = filtered.map(({ product, index }) => `
+          <tr>
+            <td>${input(product.id, "id", index)}<br><span class="help">${product.sku || ""}</span></td>
+            <td>${input(product.nombre, "nombre", index)}</td>
+            <td>${input(product.marca, "marca", index)}</td>
+            <td>${input(product.categoria, "categoria", index)}</td>
+            <td>${input(product.precio_mayorista, "precio_mayorista", index, "number")}</td>
+            <td>${input(product.precio_referencia, "precio_referencia", index, "number")}</td>
+            <td>${input(product.mi_precio, "mi_precio", index, "number")}</td>
+            <td>${boolSelect(product.disponible_proveedor, "disponible_proveedor", index)}</td>
+            <td>${boolSelect(product.mostrar_en_catalogo, "mostrar_en_catalogo", index)}</td>
+            <td>${input(product.imagen, "imagen", index, "url")}</td>
+            <td>${input(product.notas, "notas", index)}</td>
+          </tr>
+        `).join("") || '<tr><td colspan="11">No hay productos con este filtro.</td></tr>';
+
+        log("RENDER", `✅ ${filtered.length} filas renderizadas`);
+      }
+
+      function updateFromInput(event) {
+        const field = event.target.dataset.field;
+        const index = Number(event.target.dataset.index);
+        if (!field || Number.isNaN(index)) return;
+
+        const value = event.target.value;
+        if (["precio_mayorista", "precio_referencia", "mi_precio"].includes(field)) {
+          products[index][field] = Number(value);
+        } else if (["disponible_proveedor", "mostrar_en_catalogo"].includes(field)) {
+          products[index][field] = value === "true";
+        } else {
+          products[index][field] = value;
+        }
+        renderStatsOnly();
+      }
+
+      function renderStatsOnly() {
+        totalProducts.textContent = products.length;
+        visibleProducts.textContent = products.filter((product) => product.mostrar_en_catalogo && product.disponible_proveedor).length;
+        pendingProducts.textContent = products.filter((product) => product.mi_precio <= 0).length;
+        outProducts.textContent = products.filter((product) => !product.disponible_proveedor).length;
+      }
+
+      async function importProducts(file) {
+        log("IMPORT", `Importando archivo: ${file.name}`);
+        try {
+          const text = await file.text();
+          const imported = file.name.toLowerCase().endsWith(".json")
+            ? JSON.parse(text).map(CatalogData.normalizeProduct)
+            : CatalogData.parseCSV(text);
+
+          const currentById = new Map(products.map((product) => [product.id, product]));
+          products = imported.map((incoming) => {
+            const current = currentById.get(incoming.id);
+            return current
+              ? { ...incoming, mi_precio: current.mi_precio, mostrar_en_catalogo: current.mostrar_en_catalogo, notas: current.notas || incoming.notas }
+              : { ...incoming, mi_precio: incoming.mi_precio || 0, mostrar_en_catalogo: false, notas: incoming.notas || "Pendiente de precio" };
+          });
+
+          log("IMPORT", `✅ ${imported.length} productos importados`);
+          renderRows();
+        } catch (error) {
+          log("ERROR", "Fallo al importar archivo:", error);
+          alert(`❌ Error importando archivo: ${error.message}`);
+        }
+      }
+
+      function setupAdminBrands() {
+        log("SETUP", "Configurando marcas...");
+        const brands = [...new Set(products.map((product) => normMarca(product.marca)))].sort();
+        adminBrandFilter.innerHTML = '<option value="">Todas</option>' + brands.map((brand) => `<option value="${brand}">${brand}</option>`).join("");
+        log("SETUP", `✅ ${brands.length} marcas configuradas`);
+      }
+
+      // ─── INIT ──────────────────────────────────────────────────────────────
+      async function init() {
+        log("INIT", "Iniciando panel admin...");
+        try {
+          checkDependencies();
+          log("INIT", "Cargando productos desde Supabase...");
+          products = await CatalogData.loadProducts({ mode: "admin" });
+          log("INIT", `✅ ${products.length} productos cargados`);
+          log("INIT", "Configurando filtros...");
+          setupAdminBrands();
+          log("INIT", "Renderizando tabla...");
+          renderRows();
+          log("INIT", "✅ Panel admin completamente inicializado");
+        } catch (error) {
+          const errorMsg = error?.message || String(error);
+          log("ERROR", "Fallo al inicializar panel:", errorMsg);
+          authError.textContent = `❌ Error cargando datos: ${errorMsg}`;
+          document.body.classList.add("admin-locked");
+          console.error("Stack completo:", error);
+          alert(
+            "❌ Error al cargar el panel de administración:\n\n" +
+            errorMsg + "\n\n" +
+            "Posibles soluciones:\n" +
+            "1. Recarga la página (Ctrl+Shift+R)\n" +
+            "2. Verifica que Supabase esté disponible\n" +
+            "3. Abre F12 Console para ver detalles"
+          );
+        }
+      }
+
+      unlockBtn.addEventListener("click", tryUnlock);
+      pinInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") tryUnlock();
+      });
+      emailInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") pinInput.focus();
+      });
+
+      // ─── EVENT LISTENERS ──────────────────────────────────────────────────────
+      rows.addEventListener("input", updateFromInput);
+      rows.addEventListener("change", updateFromInput);
+
+      saveBtn.addEventListener("click", async () => {
+        log("SAVE", "Guardando cambios...");
+        try {
+          await CatalogData.saveProducts(products);
+          log("SAVE", "✅ Cambios guardados");
+          saveBtn.textContent = "Guardado";
+          setTimeout(() => { saveBtn.textContent = "Guardar cambios"; }, 1400);
+        } catch (error) {
+          log("ERROR", "Fallo al guardar:", error.message);
+          alert(`❌ Error al guardar: ${error.message}`);
+        }
+      });
+
+      addBtn.addEventListener("click", () => {
+        log("ADD", "Agregando nuevo producto...");
+        products.unshift(CatalogData.normalizeProduct({
+          id: `manual-${Date.now()}`,
+          nombre: "Nuevo producto",
+          marca: "",
+          categoria: "",
+          precio_mayorista: 0,
+          precio_referencia: 0,
+          mi_precio: 0,
+          disponible_proveedor: true,
+          mostrar_en_catalogo: false,
+          notas: "Pendiente de precio"
+        }));
+        renderRows();
+      });
+
+      exportCsvBtn.addEventListener("click", () => {
+        log("EXPORT", "Exportando CSV...");
+        CatalogData.download("catalogo-precios.csv", CatalogData.toCSV(products), "text/csv");
+        log("EXPORT", "✅ CSV descargado");
+      });
+
+      exportExcelBtn.addEventListener("click", () => {
+        log("EXPORT", "Exportando Excel...");
+        // Mismo orden de columnas que el CSV, para que sea fácil comparar
+        // un export contra otro (por ejemplo antes/después de sincronizar).
+        const columnas = [
+          "id", "nombre", "marca", "categoria", "imagen",
+          "precio_mayorista", "precio_referencia", "mi_precio",
+          "disponible_proveedor", "stock_proveedor", "stock_texto",
+          "mostrar_en_catalogo", "link_proveedor", "descripcion_corta", "notas"
+        ];
+        const filas = products.map((p) => {
+          const fila = {};
+          columnas.forEach((c) => { fila[c] = p[c]; });
+          return fila;
+        });
+
+        const hoja = XLSX.utils.json_to_sheet(filas, { header: columnas });
+        // Ancho de columna aproximado según el contenido, para que no quede
+        // todo apretado al abrirlo.
+        hoja["!cols"] = columnas.map((c) => ({
+          wch: Math.min(50, Math.max(10, c.length + 2, ...filas.map((f) => String(f[c] ?? "").length)))
+        }));
+
+        const libro = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(libro, hoja, "Productos");
+
+        // Fecha y hora en el nombre para poder comparar exports de distintos
+        // momentos (antes/después de una sincronización, por ejemplo).
+        const ahora = new Date();
+        const marcaTiempo = ahora.toISOString().replace(/[:T]/g, "-").slice(0, 19);
+        XLSX.writeFile(libro, `catalogo-productos_${marcaTiempo}.xlsx`);
+
+        log("EXPORT", `✅ Excel descargado (${filas.length} productos)`);
+      });
+
+      exportJsonBtn.addEventListener("click", () => {
+        log("EXPORT", "Exportando JSON...");
+        CatalogData.download("catalogo-precios.json", JSON.stringify(products, null, 2), "application/json");
+        log("EXPORT", "✅ JSON descargado");
+      });
+
+      showAvailableBtn.addEventListener("click", () => {
+        log("BULK", "Mostrando productos disponibles...");
+        products.forEach((product) => {
+          product.mostrar_en_catalogo = Boolean(product.disponible_proveedor);
+        });
+        renderRows();
+      });
+
+      hidePendingBtn.addEventListener("click", () => {
+        log("BULK", "Ocultando productos sin precio...");
+        products.forEach((product) => {
+          if (product.mi_precio <= 0) product.mostrar_en_catalogo = false;
+        });
+        renderRows();
+      });
+
+      importFile.addEventListener("change", async () => {
+        if (importFile.files[0]) await importProducts(importFile.files[0]);
+      });
+
+      adminSearch.addEventListener("input", () => { currentPage = 1; renderRows(); });
+      statusFilter.addEventListener("input", () => { currentPage = 1; renderRows(); });
+      adminBrandFilter.addEventListener("input", () => { currentPage = 1; renderRows(); });
+
+      prevPageBtn.addEventListener("click", () => {
+        currentPage -= 1;
+        renderRows();
+        rows.closest(".table-wrap").scrollTop = 0;
+      });
+      nextPageBtn.addEventListener("click", () => {
+        currentPage += 1;
+        renderRows();
+        rows.closest(".table-wrap").scrollTop = 0;
+      });
+
+      resetBtn.addEventListener("click", () => {
+        if (!confirm("¿Estás seguro? Esto restaurará los productos a la demo original.")) return;
+        log("RESET", "Restaurando demo...");
+        localStorage.removeItem(CatalogData.STORAGE_KEY);
+        window.location.reload();
+      });
+
+      // ─── DROPDOWN SINCRONIZAR ───────────────────────────────────────────────
+     // ─── BOTONES DE SINCRONIZACIÓN ──────────────────────────────────────────────
+const syncProductosBtn = document.querySelector("#syncProductosBtn");
+const syncDisponibilidadBtn = document.querySelector("#syncDisponibilidadBtn");
+const syncTonosBtn = document.querySelector("#syncTonosBtn");
+
+syncProductosBtn?.addEventListener("click", async () => {
+  if (!confirm("¿Sincronizar TODOS los productos desde Kroma? (30-60 segundos)")) return;
+  syncProductosBtn.disabled = true;
+  syncProductosBtn.textContent = "Sincronizando...";
+  try {
+    const res = await fetch("https://yfixlfxpqcjkjdhqahze.supabase.co/functions/v1/sincronizar-kroma", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ modo: "productos" })
+    });
+    const resultado = await res.json();
+    if (!resultado.success) throw new Error(resultado.error);
+    alert(`✅ ${resultado.guardados} productos importados de ${resultado.total}`);
+    products = await CatalogData.loadProducts({ mode: "admin" });
+    setupAdminBrands();
+    renderRows();
+  } catch (err) {
+    alert(`❌ Error: ${err.message}`);
+  } finally {
+    syncProductosBtn.disabled = false;
+    syncProductosBtn.textContent = "📦 Productos";
+  }
+});
+
+syncDisponibilidadBtn?.addEventListener("click", async () => {
+  if (!confirm("¿Actualizar disponibilidad en tiempo real? (15-20 segundos)")) return;
+  syncDisponibilidadBtn.disabled = true;
+  syncDisponibilidadBtn.textContent = "Sincronizando...";
+  try {
+    const res = await fetch("https://yfixlfxpqcjkjdhqahze.supabase.co/functions/v1/sincronizar-kroma", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ modo: "disponibilidad" })
+    });
+    const resultado = await res.json();
+    if (!resultado.success) throw new Error(resultado.error);
+    alert(`✅ Stock actualizado: ${resultado.sin_stock} productos sin existencias`);
+    products = await CatalogData.loadProducts({ mode: "admin" });
+    setupAdminBrands();
+    renderRows();
+  } catch (err) {
+    alert(`❌ Error: ${err.message}`);
+  } finally {
+    syncDisponibilidadBtn.disabled = false;
+    syncDisponibilidadBtn.textContent = "⚡ Stock";
+  }
+});
+
+syncTonosBtn?.addEventListener("click", async () => {
+  if (!confirm("¿Sincronizar tonos y variaciones? Puede tomar varios minutos si el catálogo es grande, porque reintenta automáticamente hasta dar una vuelta completa al catálogo.")) return;
+  syncTonosBtn.disabled = true;
+
+  const MAX_CORRIDAS = 15; // límite de seguridad para no quedar en loop infinito
+  let totalGuardados = 0;
+  let avanceAcumulado = 0;
+  let totalCatalogo = null;
+  let ultimoResultado = null;
+
+  try {
+    for (let intento = 1; intento <= MAX_CORRIDAS; intento++) {
+      syncTonosBtn.textContent = `Sincronizando... (corrida ${intento})`;
+
+      const res = await fetch("https://yfixlfxpqcjkjdhqahze.supabase.co/functions/v1/sincronizar-kroma", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ modo: "tonos" })
+      });
+      const resultado = await res.json();
+      if (!resultado.success) throw new Error(resultado.error);
+
+      totalGuardados += resultado.variaciones_sincronizadas;
+      avanceAcumulado += resultado.avance_productos ?? 0;
+      totalCatalogo = resultado.productos_con_variaciones;
+      ultimoResultado = resultado;
+
+      // Paramos cuando: (a) una corrida ya terminó sin cortarse por tiempo,
+      // O (b) ya sumamos suficiente avance como para haber dado una vuelta
+      // completa al catálogo. Con catálogos grandes, (a) casi nunca pasa en
+      // una sola corrida — por eso (b) es la condición que realmente importa.
+      if (!resultado.corte_por_tiempo) break;
+      if (totalCatalogo && avanceAcumulado >= totalCatalogo) break;
+    }
+
+    const dioLaVuelta = totalCatalogo && avanceAcumulado >= totalCatalogo;
+
+    if (!dioLaVuelta && ultimoResultado?.corte_por_tiempo) {
+      alert(`⚠️ Se alcanzó el límite de ${MAX_CORRIDAS} corridas seguidas y todavía queda progreso pendiente (esto es normal en catálogos muy grandes). Dale clic de nuevo para continuar donde se quedó.`);
+    } else {
+      alert(`✅ Ciclo completo de tonos sincronizado (${totalGuardados} tonos guardados en total en esta sesión, ${avanceAcumulado}/${totalCatalogo} productos cubiertos).`);
+    }
+  } catch (err) {
+    alert(`❌ Error: ${err.message}`);
+  } finally {
+    syncTonosBtn.disabled = false;
+    syncTonosBtn.textContent = "🎨 Tonos";
+  }
+});
+
+      // ─── STARTUP ────────────────────────────────────────────────────────────
+      log("STARTUP", "Admin panel cargando...");
+      checkSessionAndStart();
+    </script>
+  </body>
+</html>
