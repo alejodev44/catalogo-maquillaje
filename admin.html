@@ -1674,37 +1674,53 @@ syncMagnaTonosBtn?.addEventListener("click", async () => {
   if (!confirm("Sincronizar tonos desde Magna Cosmetics? Puede tomar varios minutos si el catálogo es grande, porque reintenta automáticamente hasta dar una vuelta completa.")) return;
   syncMagnaTonosBtn.disabled = true;
 
-  const MAX_CORRIDAS = 15;
+  const MAX_CORRIDAS = 25; // más margen: cada corrida individual puede ser corta si la plataforma la corta por CPU
   let totalGuardados = 0;
   let avanceAcumulado = 0;
   let totalCatalogo = null;
   let ultimoResultado = null;
+  let fallosSeguidos = 0;
+  const MAX_FALLOS_SEGUIDOS = 4; // si 4 corridas seguidas fallan, algo más serio está pasando — no reintentar para siempre
 
   try {
     for (let intento = 1; intento <= MAX_CORRIDAS; intento++) {
       syncMagnaTonosBtn.textContent = `Sincronizando... (corrida ${intento})`;
 
-      const res = await fetch("https://yfixlfxpqcjkjdhqahze.supabase.co/functions/v1/sincronizar-magna", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ modo: "tonos" })
-      });
-      const resultado = await res.json();
-      if (!resultado.success) throw new Error(resultado.error);
+      try {
+        const res = await fetch("https://yfixlfxpqcjkjdhqahze.supabase.co/functions/v1/sincronizar-magna", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ modo: "tonos" })
+        });
+        const resultado = await res.json();
+        if (!resultado.success) throw new Error(resultado.error || "Error desconocido");
 
-      totalGuardados += resultado.tonos_sincronizados;
-      avanceAcumulado += resultado.productos_revisados ?? 0;
-      totalCatalogo = resultado.total_productos;
-      ultimoResultado = resultado;
+        fallosSeguidos = 0; // esta corrida sí funcionó, resetea el contador de fallos
+        totalGuardados += resultado.tonos_sincronizados;
+        avanceAcumulado += resultado.productos_revisados ?? 0;
+        totalCatalogo = resultado.total_productos;
+        ultimoResultado = resultado;
 
-      if (!resultado.corte_por_tiempo) break;
-      if (totalCatalogo && avanceAcumulado >= totalCatalogo) break;
+        if (!resultado.corte_por_tiempo) break;
+        if (totalCatalogo && avanceAcumulado >= totalCatalogo) break;
+      } catch (errCorrida) {
+        // Una corrida individual falló (ej. "CPU Time exceeded" de la
+        // plataforma, que ni siquiera devuelve JSON válido). Como el cursor
+        // se guarda por lote dentro de cada corrida, el progreso ya hecho
+        // no se pierde — seguimos con la siguiente corrida en vez de
+        // abortar todo el ciclo.
+        fallosSeguidos++;
+        console.warn(`Corrida ${intento} falló: ${errCorrida.message}`);
+        if (fallosSeguidos >= MAX_FALLOS_SEGUIDOS) {
+          throw new Error(`${MAX_FALLOS_SEGUIDOS} corridas seguidas fallaron. Último error: ${errCorrida.message}`);
+        }
+      }
     }
 
     const dioLaVuelta = totalCatalogo && avanceAcumulado >= totalCatalogo;
 
-    if (!dioLaVuelta && ultimoResultado?.corte_por_tiempo) {
-      alert(`⚠️ Se alcanzó el límite de ${MAX_CORRIDAS} corridas seguidas y todavía queda progreso pendiente. Dale clic de nuevo para continuar donde se quedó.`);
+    if (!dioLaVuelta) {
+      alert(`⚠️ No se completó una vuelta entera al catálogo todavía (${avanceAcumulado}/${totalCatalogo ?? "?"} productos revisados en total, ${totalGuardados} tonos guardados). Esto es normal en catálogos grandes — dale clic de nuevo para seguir avanzando desde donde quedó.`);
     } else {
       alert(`✅ Ciclo completo de tonos de Magna sincronizado (${totalGuardados} tonos guardados en total).`);
     }
