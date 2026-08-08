@@ -1,0 +1,1182 @@
+﻿<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Malía Cosmetics | Maquillaje premium</title>
+    <link rel="icon" type="image/png" href="./assets/malia-logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css?v=malia-2">
+    <style>
+      /* --- Desplegable de marcas --- */
+      .brand-rail-wrap {
+        position: relative;
+      }
+      .brand-rail {
+        overflow: hidden;
+        max-height: 220px;
+        transition: max-height 0.35s ease;
+      }
+      .brand-rail-wrap.expanded .brand-rail {
+        max-height: 4000px;
+      }
+      .brand-rail-fade {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 44px;
+        height: 70px;
+        background: linear-gradient(to bottom, rgba(250,247,243,0), rgba(250,247,243,0.96));
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+      }
+      .brand-rail-wrap.expanded .brand-rail-fade {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .brand-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        width: 100%;
+        margin-top: 10px;
+        padding: 10px 16px;
+        border: 1px solid rgba(23,20,22,0.14);
+        border-radius: 2px;
+        background: #fff;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .brand-toggle .chevron {
+        display: inline-block;
+        transition: transform 0.25s ease;
+      }
+      .brand-rail-wrap.expanded .brand-toggle .chevron {
+        transform: rotate(180deg);
+      }
+
+      /* --- Selector de tono en la tarjeta de producto --- */
+      .tono-picker-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin: 8px 0;
+      }
+      .tono-picker-wrap label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        color: #7a6f72;
+        text-transform: uppercase;
+      }
+      .tono-picker {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid rgba(23,20,22,0.16);
+        border-radius: 2px;
+        font-size: 0.9rem;
+        background: #fff;
+      }
+      .tono-agotado-msg {
+        font-size: 0.85rem;
+        color: #8f183d;
+        font-weight: 600;
+        margin: 8px 0;
+      }
+
+      /* --- Menu movil --- */
+      @media (max-width: 900px) {
+        #navLinks {
+          position: fixed;
+          top: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 60;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          width: min(78vw, 320px);
+          padding: 90px 28px 28px;
+          background: #faf7f3;
+          box-shadow: -18px 0 40px rgba(23,20,22,0.18);
+          transform: translateX(100%);
+          transition: transform 220ms ease;
+        }
+        #navLinks.open {
+          transform: translateX(0);
+        }
+        #navToggle {
+          display: inline-flex !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="announcement">Pedidos por WhatsApp | Productos sujetos a disponibilidad | Asesor&iacute;a personalizada</div>
+
+    <header class="topbar">
+      <div class="brand">
+        <a href="#top" class="brand-mark logo-mark"><img src="./assets/malia-logo.png" alt="Malía Cosmetics"></a>
+      </div>
+
+      <nav class="nav-links" id="navLinks">
+        <a href="#top">Inicio</a>
+        <a href="#marcas">Marcas</a>
+        <a href="#catalogo">Cat&aacute;logo</a>
+        <a href="#nosotros">Nosotros</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button type="button" class="icon-btn" id="navSearchBtn" aria-label="Buscar productos">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.6" y2="16.6"></line></svg>
+        </button>
+        <button class="icon-btn cart-toggle" id="cartToggle" aria-label="Ver carrito">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 7h15l-1.5 9.5a2 2 0 0 1-2 1.7H8.7a2 2 0 0 1-2-1.7L5 4H2"></path><circle cx="10" cy="21" r="1.4"></circle><circle cx="18" cy="21" r="1.4"></circle></svg>
+          <span class="cart-badge" id="cartBadge" hidden>0</span>
+        </button>
+        <a class="button primary" id="whatsappTop" href="#">Pedir por WhatsApp</a>
+        <button type="button" class="icon-btn nav-toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="cart-overlay" id="cartOverlay" hidden></div>
+    <aside class="cart-panel" id="cartPanel" aria-hidden="true">
+      <div class="cart-panel-header">
+        <h2>Tu pedido</h2>
+        <button class="cart-close" id="cartClose" aria-label="Cerrar carrito">&times;</button>
+      </div>
+      <div class="cart-panel-body" id="cartItems">
+        <p class="cart-empty">Tu carrito está vacío. Agrega productos desde el cat&aacute;logo.</p>
+      </div>
+      <div class="cart-panel-footer">
+        <div class="cart-total-row">
+          <span>Total</span>
+          <strong id="cartTotal">$0</strong>
+        </div>
+
+        <form id="checkoutForm" class="checkout-form">
+          <label>Nombre completo
+            <input type="text" id="checkoutNombre" name="nombre" required placeholder="Tu nombre">
+          </label>
+          <label>Teléfono
+            <input type="tel" id="checkoutTelefono" name="telefono" required placeholder="Ej. 3001234567">
+          </label>
+          <label>Ciudad <span class="opcional">(opcional)</span>
+            <input type="text" id="checkoutCiudad" name="ciudad" placeholder="Ciudad">
+          </label>
+          <label>Dirección <span class="opcional">(opcional)</span>
+            <input type="text" id="checkoutDireccion" name="direccion" placeholder="Dirección de entrega">
+          </label>
+          <label>Notas <span class="opcional">(opcional)</span>
+            <textarea id="checkoutNotas" name="notas" rows="2" placeholder="Instrucciones adicionales"></textarea>
+          </label>
+          <button type="submit" class="button primary" id="checkoutSubmit">📩 Enviar pedido</button>
+          <p class="checkout-status" id="checkoutStatus" hidden></p>
+        </form>
+
+        <div class="checkout-divider"><span>o</span></div>
+
+        <a class="button cart-whatsapp" id="cartWhatsapp" href="#" target="_blank" rel="noreferrer">💬 Pedir por WhatsApp</a>
+      </div>
+    </aside>
+
+    <a class="whatsapp-float" id="whatsappFloat" href="#" target="_blank" rel="noreferrer" aria-label="Escríbenos por WhatsApp"><img src="./assets/whatsapp-icon.png" alt=""></a>
+
+    <main>
+      <section class="hero" id="top">
+        <div class="hero-copy">
+          <img class="hero-logo" src="./assets/malia-logo.png" alt="Malía Cosmetics">
+          <p class="eyebrow">Malía Cosmetics</p>
+          <h1>Tu belleza,<br>tu esencia.</h1>
+          <p>Descubre maquillaje, skincare y productos seleccionados para realzar lo que te hace única.</p>
+          <div class="hero-search">
+            <input id="heroSearch" type="search" placeholder="Busca por producto, marca o tono">
+            <a class="button primary" href="#catalogo" aria-label="Buscar en el catálogo">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.6" y2="16.6"></line></svg>
+            </a>
+          </div>
+          <div class="hero-actions">
+            <a class="button primary" href="#catalogo">Explorar colección</a>
+            <a class="button outline" id="whatsappHero" href="#" target="_blank" rel="noreferrer">Comprar por WhatsApp</a>
+          </div>
+        </div>
+        <div class="hero-media">
+          <img src="./assets/hero-photo.png" alt="Selección de maquillaje y skincare Malía Cosmetics">
+        </div>
+      </section>
+
+      <section class="discover">
+        <div class="section-title">
+          <h2>Todo lo que necesitas para crear tu look.</h2>
+        </div>
+        <div class="discover-grid">
+          <button type="button" class="discover-card" data-discover-label="Maquillaje" data-discover-keywords="base,corrector,rubor,blush,sombra,delineador,contorno,iluminador,bronzer,bronceador,polvo,primer,fijador,ceja,pestañina,mascara de pestañas,rimel,paleta,concealer">
+            <img src="./assets/discover-maquillaje.jpg" alt="Maquillaje">
+            <span>Maquillaje</span>
+          </button>
+          <button type="button" class="discover-card" data-discover-label="Skincare" data-discover-keywords="crema,serum,sérum,limpiador,tonico,tónico,hidratante,mascarilla,protector solar,spf,exfoliante,micelar,facial,colageno,colágeno,skincare,cuidado del rostro,cuidado facial">
+            <img src="./assets/discover-skincare.jpg" alt="Skincare">
+            <span>Skincare</span>
+          </button>
+          <button type="button" class="discover-card" data-discover-label="Labios" data-discover-keywords="labial,labios,gloss,lip,balsamo,bálsamo,tinta">
+            <img src="./assets/discover-labios.jpg" alt="Labios">
+            <span>Labios</span>
+          </button>
+        </div>
+      </section>
+
+      <section id="marcas" class="brand-showcase">
+        <div class="section-title">
+          <h2>Tus marcas favoritas, en un solo lugar.</h2>
+        </div>
+        <div class="brand-rail-wrap" id="brandRailWrap">
+          <div class="brand-rail" id="brandRail"></div>
+          <div class="brand-rail-fade"></div>
+          <button type="button" class="brand-toggle" id="brandToggle">
+            <span id="brandToggleText">Ver todas las marcas</span>
+            <span class="chevron">▾</span>
+          </button>
+        </div>
+      </section>
+
+      <section id="filtros" class="filters" aria-label="Filtros">
+        <div class="field">
+          <label for="search">Buscar</label>
+          <input id="search" type="search" placeholder="Producto o marca">
+        </div>
+        <div class="field">
+          <label for="brandFilter">Marca</label>
+          <select id="brandFilter">
+            <option value="">Todas</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="sort">Ordenar</label>
+          <select id="sort">
+            <option value="featured">Marcas destacadas</option>
+            <option value="price-asc">Menor precio</option>
+            <option value="price-desc">Mayor precio</option>
+            <option value="name">Nombre</option>
+          </select>
+        </div>
+      </section>
+
+      <div class="catalog-heading">
+        <h2>Lo que está brillando ahora.</h2>
+        <p class="results-summary" id="resultsSummary">Cargando productos...</p>
+      </div>
+      <section id="catalogo" class="catalog" aria-live="polite"></section>
+
+      <section class="final-banner">
+        <h2>Encuentra tu próximo favorito.</h2>
+        <a class="button banner-btn" href="#catalogo">Ver catálogo</a>
+      </section>
+    </main>
+
+    <footer class="site-footer" id="nosotros">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <img src="./assets/malia-logo.png" alt="Malía Cosmetics">
+          <p>Maquillaje, skincare y cuidado personal seleccionados con cuidado. Belleza que te define.</p>
+        </div>
+        <div class="footer-col">
+          <h3>Navegación</h3>
+          <a href="#top">Inicio</a>
+          <a href="#marcas">Marcas</a>
+          <a href="#catalogo">Catálogo</a>
+          <a href="#nosotros">Nosotros</a>
+        </div>
+        <div class="footer-col">
+          <h3>Contáctanos</h3>
+          <a href="#" id="whatsappFooter" target="_blank" rel="noreferrer">WhatsApp</a>
+          <a href="https://instagram.com" target="_blank" rel="noreferrer">Instagram</a>
+          <span class="footer-static">Pedidos con asesoría personalizada</span>
+          <span class="footer-static">Envíos según disponibilidad de proveedor</span>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© <span id="footerYear"></span> Malía Cosmetics. Todos los derechos reservados.</span>
+      </div>
+    </footer>
+
+    <div class="product-modal" id="productModal" aria-hidden="true" hidden>
+      <div class="product-modal-backdrop" data-close-product></div>
+      <article class="product-modal-card" role="dialog" aria-modal="true" aria-label="Detalle de producto">
+        <button class="product-modal-close" type="button" data-close-product aria-label="Cerrar detalle">&times;</button>
+        <div class="product-gallery">
+          <img id="modalMainImage" src="" alt="">
+          <div class="product-thumbs" id="modalThumbs"></div>
+        </div>
+        <div class="product-modal-info" id="modalInfo"></div>
+      </article>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="./supabase.js?v=malia-2"></script>
+    <script src="./app.js?v=malia-2"></script>
+<script>
+      const catalog = document.querySelector("#catalogo");
+      const search = document.querySelector("#search");
+      const heroSearch = document.querySelector("#heroSearch");
+      const brandFilter = document.querySelector("#brandFilter");
+      const brandRail = document.querySelector("#brandRail");
+      const brandRailWrap = document.querySelector("#brandRailWrap");
+      const brandToggle = document.querySelector("#brandToggle");
+      const brandToggleText = document.querySelector("#brandToggleText");
+      const sort = document.querySelector("#sort");
+      const resultsSummary = document.querySelector("#resultsSummary");
+      const whatsappTop = document.querySelector("#whatsappTop");
+      const whatsappNumber = "573008911101";
+      const cartToggle = document.querySelector("#cartToggle");
+      const cartBadge = document.querySelector("#cartBadge");
+      const cartOverlay = document.querySelector("#cartOverlay");
+      const cartPanel = document.querySelector("#cartPanel");
+      const cartClose = document.querySelector("#cartClose");
+      const cartItemsEl = document.querySelector("#cartItems");
+      const cartTotalEl = document.querySelector("#cartTotal");
+      const cartWhatsapp = document.querySelector("#cartWhatsapp");
+      const whatsappFloat = document.querySelector("#whatsappFloat");
+      const whatsappHero = document.querySelector("#whatsappHero");
+      const whatsappFooter = document.querySelector("#whatsappFooter");
+      const checkoutForm = document.querySelector("#checkoutForm");
+      const checkoutSubmit = document.querySelector("#checkoutSubmit");
+      const checkoutStatus = document.querySelector("#checkoutStatus");
+      const productModal = document.querySelector("#productModal");
+      const modalMainImage = document.querySelector("#modalMainImage");
+      const modalThumbs = document.querySelector("#modalThumbs");
+      const modalInfo = document.querySelector("#modalInfo");
+      let cart = []; // en memoria únicamente, no localStorage
+      let products = [];
+      let visibleLimit = 60;
+      let discoverKeywords = null;
+      let discoverLabel = "";
+      const brandPriority = [
+        "Trendy",
+        "Atenea",
+        "Ani-K",
+        "Bloomshell",
+        "Ruby Rose",
+        "Samy",
+        "Vogue",
+        "Anyeluz",
+        "Montoc",
+        "Kaba",
+        "Dolce Bella",
+        "Bioaqua",
+        "Purpure",
+        "Beauty Glazed",
+        "Kiss Beauty",
+        "Lissia",
+        "Milagros",
+        "Elaya",
+        "Lula",
+        "Miis",
+        "Melu",
+        "Ole"
+      ];
+
+      function setupFilters() {
+const brands = getSortedBrands();
+        brandFilter.innerHTML = '<option value="">Todas</option>' + brands.map((item) => `<option value="${item}">${brandLabel(item)}</option>`).join("");
+        renderBrandRail(brands);
+      }
+
+      function brandLabel(brand) {
+        return brand === "Sin marca" ? "Otras marcas" : brand;
+      }
+
+      function brandRank(brand) {
+        const index = brandPriority.findIndex((item) => item.toLowerCase() === String(brand || "").toLowerCase());
+        return index === -1 ? 999 : index;
+      }
+
+      function normMarca(marca) {
+        return marca && String(marca).trim() ? marca : "Sin marca";
+      }
+
+      function getSortedBrands() {
+        return [...new Set(products.map((item) => normMarca(item.marca)))]
+          .sort((a, b) => {
+            if (a === "Sin marca") return 1;
+            if (b === "Sin marca") return -1;
+            return a.localeCompare(b, "es", { sensitivity: "base" });
+          });
+      }
+
+      function matchesDiscoverKeywords(product, keywords) {
+        if (!keywords || !keywords.length) return true;
+        const haystack = normalizeText(productSearchText(product));
+        return keywords.some((kw) => haystack.includes(normalizeText(kw)));
+      }
+
+      function getProductScore(product) {
+        return brandRank(normMarca(product.marca)) * 100000
+          + (product.mi_precio > 0 ? 0 : 10000)
+          + (product.disponible_proveedor ? 0 : 5000);
+      }
+
+      function normalizeText(value) {
+        return String(value || "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, " ")
+          .trim();
+      }
+
+      function editDistance(a, b) {
+        if (!a || !b) return Math.max(a.length, b.length);
+        if (Math.abs(a.length - b.length) > 2) return 3;
+        const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+        const curr = Array(b.length + 1).fill(0);
+        for (let i = 1; i <= a.length; i++) {
+          curr[0] = i;
+          for (let j = 1; j <= b.length; j++) {
+            curr[j] = Math.min(
+              prev[j] + 1,
+              curr[j - 1] + 1,
+              prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+            );
+          }
+          for (let j = 0; j <= b.length; j++) prev[j] = curr[j];
+        }
+        return prev[b.length];
+      }
+
+      function productSearchText(product) {
+        const variaciones = variacionesPorProducto[product.id] || [];
+        const tonos = variaciones.map((v) => `${v.tono || ""} ${v.stock_texto || ""}`).join(" ");
+        return normalizeText(`${product.nombre} ${product.marca} ${product.categoria} ${product.descripcion_corta} ${product.sku} ${tonos}`);
+      }
+
+      function fuzzyScore(product, rawQuery) {
+        const query = normalizeText(rawQuery);
+        if (!query) return 1;
+        const haystack = productSearchText(product);
+        const hayWords = haystack.split(" ").filter(Boolean);
+        const tokens = query.split(" ").filter((token) => token.length > 1);
+        if (!tokens.length) return 1;
+
+        let score = 0;
+        for (const token of tokens) {
+          if (haystack.includes(token)) {
+            score += token.length >= 4 ? 6 : 4;
+            continue;
+          }
+          const close = hayWords.some((word) => {
+            if (word.startsWith(token) || token.startsWith(word)) return true;
+            if (token.length < 4 || word.length < 4) return false;
+            return editDistance(token, word) <= 2;
+          });
+          if (close) score += 3;
+        }
+        return score / tokens.length;
+      }
+
+      function getBrandImage(brand) {
+        const product = products.find((item) => normMarca(item.marca) === brand && item.imagen);
+        return product?.imagen || "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=600&q=80";
+      }
+
+      function getBrandCount(brand) {
+        return products.filter((item) => normMarca(item.marca) === brand && item.mostrar_en_catalogo && item.disponible_proveedor).length;
+      }
+
+      function renderBrandRail(brands) {
+        brandRail.innerHTML = brands.map((brand, index) => `
+          <button class="brand-tile" data-brand="${brand}">
+            <img src="${getBrandImage(brand)}" alt="${brand}" loading="lazy">
+            <span>${String(index + 1).padStart(2, "0")}</span>
+            <strong>${brand}</strong>
+            <small>${getBrandCount(brand)} productos</small>
+          </button>
+        `).join("");
+
+        brandRail.querySelectorAll("[data-brand]").forEach((button) => {
+          button.addEventListener("click", () => {
+            brandFilter.value = button.dataset.brand;
+            visibleLimit = 60;
+            render();
+            document.querySelector("#catalogo").scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        });
+      }
+
+      let variacionesPorProducto = {};
+
+      // ─── NORMALIZACIÓN DE TONOS ENTRE PROVEEDORES ───────────────────────────
+      // Kroma y Magna escriben el mismo tono con formato distinto:
+      //   Kroma: "1 LIGHT", "6 SAND", "7.5MEDIUMDEEP"
+      //   Magna: "Color:: tono 01 light", "Color:: Tono 06 Sand", "golden tan (6.5)"
+      // Sin esto, cada proveedor genera su propia pastilla para el MISMO
+      // color, duplicando la lista (ej. "24 disponibles" en vez de 15).
+      // normalizarTono reduce ambos formatos a "numero nombre" en minúsculas
+      // y sin relleno, para poder agruparlos como el mismo tono.
+      function normalizarTono(texto) {
+        let t = String(texto || "").toLowerCase();
+        t = t.replace(/^color::\s*/, "");
+        t = t.replace(/^tono\s*/, "");
+        const numMatch = t.match(/(\d+(?:\.\d+)?)/);
+        const numero = numMatch ? String(parseFloat(numMatch[1])) : "";
+        const nombre = t
+          .replace(/\([^)]*\)/g, " ")   // quita paréntesis, ej. "(6.5)"
+          .replace(/\d+(\.\d+)?/g, " ") // quita números sueltos
+          .replace(/[^a-z\s]/g, " ")    // quita puntuación restante
+          .replace(/\s+/g, " ")
+          .trim();
+        return `${numero} ${nombre}`.trim();
+      }
+
+      // Combina variaciones que representan el mismo tono (mismo texto
+      // normalizado) en una sola entrada: disponible si CUALQUIERA de los
+      // proveedores lo tiene en stock, y usa el texto más "limpio" como
+      // etiqueta visible (evita mostrar el prefijo "Color::" de Magna si
+      // Kroma ya tiene ese mismo tono con un nombre más simple).
+      function fusionarTonosDuplicados(variaciones) {
+        if (!variaciones || variaciones.length === 0) return [];
+        const grupos = new Map();
+        for (const v of variaciones) {
+          const clave = normalizarTono(v.tono);
+          if (!grupos.has(clave)) grupos.set(clave, []);
+          grupos.get(clave).push(v);
+        }
+        return [...grupos.values()].map((grupo) => {
+          const disponibles = grupo.filter((v) => v.disponible);
+          // Preferimos como etiqueta la variación disponible más "limpia"
+          // (sin el prefijo "Color::" de Magna); si ninguna está disponible,
+          // igual preferimos la más limpia entre todas.
+          const candidatos = disponibles.length ? disponibles : grupo;
+          const representante = [...candidatos].sort((a, b) => {
+            const sucioA = /^color::/i.test(a.tono) ? 1 : 0;
+            const sucioB = /^color::/i.test(b.tono) ? 1 : 0;
+            if (sucioA !== sucioB) return sucioA - sucioB;
+            return a.tono.length - b.tono.length;
+          })[0];
+          return {
+            ...representante,
+            disponible: disponibles.length > 0,
+            imagen: grupo.find((v) => v.imagen)?.imagen || representante.imagen,
+          };
+        });
+      }
+
+      function productMessage(product, tono = "") {
+        const price = product.mi_precio > 0 ? CatalogData.formatMoney(product.mi_precio) : "consultar precio";
+        const tonoText = tono ? ` - Tono: ${tono}` : "";
+        return encodeURIComponent(`Hola, quiero comprar: ${product.nombre} (${product.marca})${tonoText} - ${price}`);
+      }
+
+      function whatsappUrl(message) {
+        return whatsappNumber
+          ? `https://wa.me/${whatsappNumber}?text=${message}`
+          : `https://wa.me/?text=${message}`;
+      }
+
+      function renderTonosPill(variaciones) {
+        if (!variaciones || variaciones.length === 0) return "";
+        const disponibles = variaciones.filter(v => v.disponible);
+        const agotados = variaciones.filter(v => !v.disponible);
+        const ordenados = [...disponibles, ...agotados];
+        const LIMITE = 10;
+        const visibles = ordenados.slice(0, LIMITE);
+        const ocultos = ordenados.slice(LIMITE);
+
+        const pillHtml = (v) => `
+          <span class="tono-pill ${v.disponible ? "disponible" : "agotado"}" title="${v.tono} - ${v.stock_texto || (v.disponible ? "Disponible" : "Agotado")}">
+            ${v.tono}
+          </span>
+        `;
+
+        return `
+          <div class="tonos-wrap">
+            <span class="tonos-label">Tonos: ${disponibles.length} disponibles</span>
+            <div class="tonos-list">
+              ${visibles.map(pillHtml).join("")}
+              ${ocultos.length > 0 ? `
+                <span class="tonos-extra" hidden>${ocultos.map(pillHtml).join("")}</span>
+                <button type="button" class="tono-pill more tono-toggle" data-count="${ocultos.length}" data-expanded="false">+${ocultos.length} más</button>
+              ` : ""}
+            </div>
+          </div>`;
+      }
+
+      function renderTonoPicker(variaciones, productId) {
+        if (!variaciones || variaciones.length === 0) return { html: "", sinStock: false };
+        const disponibles = variaciones.filter((v) => v.disponible);
+        const agotados = variaciones.filter((v) => !v.disponible);
+        if (!disponibles.length) {
+          return { html: `<p class="tono-agotado-msg">Todos los tonos están agotados</p>`, sinStock: true };
+        }
+        const ordenados = [...disponibles, ...agotados];
+        const html = `
+          <div class="tono-picker-wrap">
+            <label for="tono-${productId}">Elige un tono</label>
+            <select id="tono-${productId}" class="tono-picker" data-id="${productId}">
+              ${ordenados.map((v) => `<option value="${v.tono}" ${!v.disponible ? "disabled" : ""}>${v.tono}${!v.disponible ? " (agotado)" : ""}</option>`).join("")}
+            </select>
+          </div>
+        `;
+        return { html, sinStock: false };
+      }
+
+      function productCard(product) {
+        const image = product.imagen || "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=900&q=80";
+        const variaciones = variacionesPorProducto[product.id] || [];
+        const tonosHtml = renderTonosPill(variaciones);
+        const tonoPicker = renderTonoPicker(variaciones, product.id);
+        return `
+          <article class="product-card" data-product-id="${product.id}">
+            <button type="button" class="product-image-btn" data-view-product="${product.id}" aria-label="Ver ${product.nombre} en grande">
+              <img src="${image}" alt="${product.nombre}" loading="lazy">
+            </button>
+            <div class="product-body">
+              <div class="meta">
+                <span>${brandLabel(product.marca || "Sin marca")}</span>
+              </div>
+              <h2>${product.nombre}</h2>
+              ${product.descripcion_corta ? `<p class="product-desc">${product.descripcion_corta}</p>` : ""}
+              ${tonosHtml}
+              ${tonoPicker.html}
+              <div class="price-row">
+                <span class="price">${product.mi_precio > 0 ? CatalogData.formatMoney(product.mi_precio) : "Consultar precio"}</span>
+                <span class="stock">${product.stock_texto || "Disponible"}</span>
+              </div>
+              <button type="button" class="button view-product-btn" data-view-product="${product.id}">Ver grande</button>
+              <button type="button" class="button primary add-to-cart-btn" data-id="${product.id}" ${tonoPicker.sinStock ? "disabled" : ""}>${tonoPicker.sinStock ? "Agotado" : "Agregar al carrito"}</button>
+            </div>
+          </article>
+        `;
+      }
+
+      function productGalleryImages(product) {
+        const variaciones = variacionesPorProducto[product.id] || [];
+        const images = [product.imagen, ...variaciones.map((v) => v.imagen)]
+          .filter(Boolean)
+          .filter((src, index, arr) => arr.indexOf(src) === index);
+        return images.length ? images : ["https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=900&q=80"];
+      }
+
+      function openProductModal(productId) {
+        const product = products.find((p) => p.id === productId);
+        if (!product) return;
+        const variaciones = variacionesPorProducto[product.id] || [];
+        const images = productGalleryImages(product);
+        modalMainImage.src = images[0];
+        modalMainImage.alt = product.nombre;
+        modalThumbs.innerHTML = images.map((src, index) => `
+          <button type="button" class="product-thumb ${index === 0 ? "active" : ""}" data-src="${src}">
+            <img src="${src}" alt="${product.nombre} imagen ${index + 1}">
+          </button>
+        `).join("");
+        modalInfo.innerHTML = `
+          <p class="eyebrow">${brandLabel(product.marca || "Sin marca")}</p>
+          <h2>${product.nombre}</h2>
+          ${product.descripcion_corta ? `<p>${product.descripcion_corta}</p>` : ""}
+          ${renderTonosPill(variaciones)}
+          <div class="modal-price-row">
+            <strong>${product.mi_precio > 0 ? CatalogData.formatMoney(product.mi_precio) : "Consultar precio"}</strong>
+            <span>${product.stock_texto || "Disponible"}</span>
+          </div>
+          ${renderTonoPicker(variaciones, `modal-${product.id}`).html}
+          <button type="button" class="button primary modal-add-cart" data-id="${product.id}">Agregar al carrito</button>
+        `;
+        productModal.hidden = false;
+        productModal.classList.add("open");
+        productModal.setAttribute("aria-hidden", "false");
+        document.body.classList.add("modal-open");
+      }
+
+      function closeProductModal() {
+        productModal.classList.remove("open");
+        productModal.setAttribute("aria-hidden", "true");
+        productModal.hidden = true;
+        document.body.classList.remove("modal-open");
+      }
+
+      // ─── CARRITO ────────────────────────────────────────────────────────────
+      function cartKey(productId, tono) {
+        return `${productId}::${tono || ""}`;
+      }
+
+      function addToCart(productId, tono = "") {
+        const product = products.find((p) => p.id === productId);
+        if (!product) return;
+        const key = cartKey(productId, tono);
+        const existing = cart.find((item) => item.key === key);
+        if (existing) {
+          existing.cantidad += 1;
+        } else {
+          cart.push({
+            key,
+            productId,
+            nombre: product.nombre,
+            marca: product.marca,
+            precio: product.mi_precio || 0,
+            imagen: product.imagen,
+            tono,
+            cantidad: 1
+          });
+        }
+        renderCart();
+        openCart();
+      }
+
+      function removeCartItem(key) {
+        cart = cart.filter((item) => item.key !== key);
+        renderCart();
+      }
+
+      function changeCartQty(key, delta) {
+        const item = cart.find((entry) => entry.key === key);
+        if (!item) return;
+        item.cantidad = Math.max(1, item.cantidad + delta);
+        renderCart();
+      }
+
+      function changeCartTono(key, newTono) {
+        const item = cart.find((entry) => entry.key === key);
+        if (!item) return;
+        const newKey = cartKey(item.productId, newTono);
+        const collision = cart.find((entry) => entry.key === newKey && entry !== item);
+        if (collision) {
+          collision.cantidad += item.cantidad;
+          cart = cart.filter((entry) => entry !== item);
+        } else {
+          item.tono = newTono;
+          item.key = newKey;
+        }
+        renderCart();
+      }
+
+      function cartItemHtml(item) {
+        const variaciones = variacionesPorProducto[item.productId] || [];
+        const tonoSelect = variaciones.length ? `
+          <select class="cart-tono-select" data-key="${item.key}">
+            ${variaciones.map((v) => `<option value="${v.tono}" ${v.tono === item.tono ? "selected" : ""} ${!v.disponible ? "disabled" : ""}>${v.tono}${!v.disponible ? " (agotado)" : ""}</option>`).join("")}
+          </select>
+        ` : "";
+        return `
+          <div class="cart-item" data-key="${item.key}">
+            <img src="${item.imagen || "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=200&q=80"}" alt="${item.nombre}">
+            <div class="cart-item-info">
+              <strong>${item.nombre}</strong>
+              <span class="help">${brandLabel(item.marca)}</span>
+              ${tonoSelect}
+              <div class="cart-item-qty">
+                <button type="button" class="qty-btn" data-key="${item.key}" data-delta="-1">−</button>
+                <span>${item.cantidad}</span>
+                <button type="button" class="qty-btn" data-key="${item.key}" data-delta="1">+</button>
+              </div>
+            </div>
+            <div class="cart-item-side">
+              <span class="price">${item.precio > 0 ? CatalogData.formatMoney(item.precio * item.cantidad) : "Consultar"}</span>
+              <button type="button" class="cart-remove" data-key="${item.key}" aria-label="Eliminar">🗑</button>
+            </div>
+          </div>
+        `;
+      }
+
+      function cartTotal() {
+        return cart.reduce((sum, item) => sum + (item.precio || 0) * item.cantidad, 0);
+      }
+
+      function cartItemsForOrder() {
+        return cart.map((item) => {
+          const product = products.find((p) => p.id === item.productId) || {};
+          const precio = item.precio || 0;
+          const mayorista = Number(product.precio_mayorista || 0);
+          const cantidad = Number(item.cantidad || 1);
+          return {
+            id: item.productId,
+            nombre: item.nombre,
+            marca: item.marca,
+            tono: item.tono || null,
+            cantidad,
+            precio,
+            precio_mayorista: mayorista,
+            subtotal: precio * cantidad,
+            margen: Math.max(0, (precio - mayorista) * cantidad)
+          };
+        });
+      }
+
+      function invoiceHtml(order) {
+        const fecha = new Date().toLocaleString("es-CO", { dateStyle: "medium", timeStyle: "short" });
+        const logoUrl = new URL("./amsi-logo.png", window.location.href).href;
+        const rowsHtml = order.items.map((item) => `
+          <tr>
+            <td><strong>${item.nombre}</strong><br><span>${item.marca || ""}${item.tono ? ` / ${item.tono}` : ""}</span></td>
+            <td>${item.cantidad}</td>
+            <td>${CatalogData.formatMoney(item.precio)}</td>
+            <td>${CatalogData.formatMoney(item.subtotal)}</td>
+          </tr>
+        `).join("");
+        return `<!doctype html>
+          <html lang="es">
+          <head>
+            <meta charset="utf-8">
+            <title>Factura Lumbre Beauty</title>
+            <style>
+              body { margin: 0; padding: 34px; color: #171113; font-family: Inter, Arial, sans-serif; background: #fbf7f5; }
+              .invoice { max-width: 840px; margin: 0 auto; background: white; border: 1px solid #eadfe1; border-radius: 12px; overflow: hidden; box-shadow: 0 18px 40px rgba(50,24,28,.12); }
+              .head { display: flex; justify-content: space-between; gap: 24px; padding: 28px; background: #171113; color: white; }
+              .brand { display: flex; align-items: center; gap: 12px; font-weight: 900; font-size: 22px; }
+              .brand img { width: 58px; height: 58px; border-radius: 10px; object-fit: cover; border: 1px solid rgba(255,255,255,.22); }
+              .meta { text-align: right; color: #f4dce2; }
+              .body { padding: 28px; }
+              .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 22px; }
+              .box { border: 1px solid #eadfe1; border-radius: 10px; padding: 14px; }
+              h1, h2, p { margin: 0; }
+              h1 { font-size: 28px; }
+              h2 { font-size: 13px; text-transform: uppercase; color: #9f2443; margin-bottom: 8px; }
+              table { width: 100%; border-collapse: collapse; }
+              th { text-align: left; color: #74182e; font-size: 12px; text-transform: uppercase; border-bottom: 1px solid #eadfe1; padding: 10px; }
+              td { border-bottom: 1px solid #f1e5e8; padding: 12px 10px; vertical-align: top; }
+              td span { color: #6f6265; font-size: 12px; }
+              .total { display: flex; justify-content: flex-end; gap: 24px; align-items: center; padding-top: 18px; font-size: 18px; }
+              .total strong { color: #74182e; font-size: 24px; }
+              .note { margin-top: 20px; color: #6f6265; font-size: 13px; }
+              @media print { body { background: white; padding: 0; } .invoice { box-shadow: none; border-radius: 0; } }
+            </style>
+          </head>
+          <body>
+            <section class="invoice">
+              <div class="head">
+                <div>
+                  <div class="brand"><img src="${logoUrl}" alt="Lumbre Beauty"><span>Lumbre Beauty</span></div>
+                  <p style="margin-top:10px;">Factura personalizada de pedido</p>
+                </div>
+                <div class="meta">
+                  <h1>Factura</h1>
+                  <p>${fecha}</p>
+                </div>
+              </div>
+              <div class="body">
+                <div class="grid">
+                  <div class="box">
+                    <h2>Cliente</h2>
+                    <p><strong>${order.nombre}</strong></p>
+                    <p>${order.telefono}</p>
+                    <p>${[order.ciudad, order.direccion].filter(Boolean).join(" - ")}</p>
+                  </div>
+                  <div class="box">
+                    <h2>Pedido</h2>
+                    <p>${order.items.length} producto(s)</p>
+                    <p>${order.notas || "Sin notas adicionales"}</p>
+                  </div>
+                </div>
+                <table>
+                  <thead><tr><th>Producto</th><th>Cant.</th><th>Precio</th><th>Subtotal</th></tr></thead>
+                  <tbody>${rowsHtml}</tbody>
+                </table>
+                <div class="total"><span>Total</span><strong>${CatalogData.formatMoney(order.total)}</strong></div>
+                <p class="note">Gracias por comprar con Lumbre Beauty. Te contactaremos para confirmar disponibilidad y entrega.</p>
+              </div>
+            </section>
+            <script>setTimeout(() => window.print(), 500);<\/script>
+          </body>
+          </html>`;
+      }
+
+      function openInvoice(order) {
+        const invoice = window.open("", "_blank", "width=960,height=720");
+        if (!invoice) return;
+        invoice.document.open();
+        invoice.document.write(invoiceHtml(order));
+        invoice.document.close();
+      }
+
+      function cartWhatsappMessage() {
+        const lines = cart.map((item, i) => {
+          const tonoText = item.tono ? `\n   🎨 Tono: ${item.tono}` : "";
+          const precioText = item.precio > 0 ? CatalogData.formatMoney(item.precio) : "consultar precio";
+          const subtotal = item.precio > 0 ? CatalogData.formatMoney(item.precio * item.cantidad) : "";
+          const precioLinea = subtotal ? `${precioText} c/u — ${subtotal}` : precioText;
+          return `${i + 1}. *${item.nombre}*\n   ${item.marca} · Cant: ${item.cantidad}${tonoText}\n   💲 ${precioLinea}`;
+        });
+        const total = cartTotal();
+        const totalText = total > 0 ? `\n\n*Total: ${CatalogData.formatMoney(total)}*` : "";
+        const mensaje = `¡Hola! 👋 Quiero hacer este pedido:\n\n${lines.join("\n\n")}${totalText}\n\n¿Me confirmas disponibilidad? Gracias 🙌`;
+        return encodeURIComponent(mensaje);
+      }
+
+      function renderCart() {
+        const count = cart.reduce((sum, item) => sum + item.cantidad, 0);
+        cartBadge.hidden = count === 0;
+        cartBadge.textContent = count;
+        cartItemsEl.innerHTML = cart.length
+          ? cart.map(cartItemHtml).join("")
+          : '<p class="cart-empty">Tu carrito está vacío. Agrega productos desde el catálogo.</p>';
+        cartTotalEl.textContent = CatalogData.formatMoney(cartTotal());
+        cartWhatsapp.href = whatsappUrl(cartWhatsappMessage());
+        if (!cart.length) {
+          cartWhatsapp.setAttribute("aria-disabled", "true");
+          checkoutSubmit.disabled = true;
+        } else {
+          cartWhatsapp.removeAttribute("aria-disabled");
+          checkoutSubmit.disabled = false;
+        }
+      }
+
+      function openCart() {
+        cartOverlay.hidden = false;
+        cartPanel.classList.add("open");
+        cartPanel.setAttribute("aria-hidden", "false");
+      }
+
+      function closeCart() {
+        cartOverlay.hidden = true;
+        cartPanel.classList.remove("open");
+        cartPanel.setAttribute("aria-hidden", "true");
+      }
+
+      brandToggle.addEventListener("click", () => {
+        const expanded = brandRailWrap.classList.toggle("expanded");
+        brandToggleText.textContent = expanded ? "Ver menos marcas" : "Ver todas las marcas";
+      });
+
+      cartToggle.addEventListener("click", openCart);
+      cartClose.addEventListener("click", closeCart);
+      cartOverlay.addEventListener("click", closeCart);
+
+      checkoutForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (!cart.length) return;
+
+        checkoutStatus.hidden = true;
+        checkoutStatus.className = "checkout-status";
+        checkoutSubmit.disabled = true;
+        checkoutSubmit.textContent = "Enviando...";
+
+        try {
+          const order = {
+            nombre: document.querySelector("#checkoutNombre").value.trim(),
+            telefono: document.querySelector("#checkoutTelefono").value.trim(),
+            ciudad: document.querySelector("#checkoutCiudad").value.trim() || null,
+            direccion: document.querySelector("#checkoutDireccion").value.trim() || null,
+            notas: document.querySelector("#checkoutNotas").value.trim() || null,
+            items: cartItemsForOrder(),
+            total: cartTotal()
+          };
+
+          await SupabaseDB.crearPedido(order);
+          openInvoice(order);
+
+          checkoutStatus.textContent = "✅ ¡Pedido enviado! Te contactaremos pronto para confirmar.";
+          checkoutStatus.classList.add("success");
+          checkoutStatus.hidden = false;
+          checkoutForm.reset();
+          cart = [];
+          renderCart();
+        } catch (err) {
+          checkoutStatus.textContent = "❌ No pudimos enviar el pedido. Intenta de nuevo o pide por WhatsApp.";
+          checkoutStatus.classList.add("error");
+          checkoutStatus.hidden = false;
+        } finally {
+          checkoutSubmit.disabled = false;
+          checkoutSubmit.textContent = "📩 Enviar pedido";
+        }
+      });
+
+      cartItemsEl.addEventListener("click", (event) => {
+        const qtyBtn = event.target.closest(".qty-btn");
+        if (qtyBtn) {
+          changeCartQty(qtyBtn.dataset.key, Number(qtyBtn.dataset.delta));
+          return;
+        }
+        const removeBtn = event.target.closest(".cart-remove");
+        if (removeBtn) removeCartItem(removeBtn.dataset.key);
+      });
+
+      cartItemsEl.addEventListener("change", (event) => {
+        const select = event.target.closest(".cart-tono-select");
+        if (select) changeCartTono(select.dataset.key, select.value);
+      });
+
+      function render() {
+        const query = search.value.trim();
+        const chosenBrand = brandFilter.value;
+        let sorted = products
+          .filter((product) => product.mostrar_en_catalogo && product.disponible_proveedor)
+          .filter((product) => !chosenBrand || normMarca(product.marca) === chosenBrand)
+          .filter((product) => matchesDiscoverKeywords(product, discoverKeywords))
+          .map((product) => ({ product, score: fuzzyScore(product, query) }))
+          .filter((entry) => !query || entry.score >= 2.5)
+          .sort((a, b) => query ? b.score - a.score : 0)
+          .map((entry) => entry.product);
+
+        if (query && sorted.length < 8) {
+          sorted = products
+            .filter((product) => product.mostrar_en_catalogo && product.disponible_proveedor)
+            .filter((product) => !chosenBrand || normMarca(product.marca) === chosenBrand)
+            .filter((product) => matchesDiscoverKeywords(product, discoverKeywords))
+            .map((product) => ({ product, score: fuzzyScore(product, query) }))
+            .filter((entry) => entry.score > 0)
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 24)
+            .map((entry) => entry.product);
+        }
+
+        if (sort.value === "featured" && !query) sorted.sort((a, b) => getProductScore(a) - getProductScore(b) || a.nombre.localeCompare(b.nombre));
+        if (sort.value === "price-asc") sorted.sort((a, b) => (a.mi_precio || Number.MAX_SAFE_INTEGER) - (b.mi_precio || Number.MAX_SAFE_INTEGER));
+        if (sort.value === "price-desc") sorted.sort((a, b) => (b.mi_precio || -1) - (a.mi_precio || -1));
+        if (sort.value === "name") sorted.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+        const page = sorted.slice(0, visibleLimit);
+        const shown = Math.min(sorted.length, visibleLimit);
+        const activeFilters = [
+          discoverKeywords ? `categoría: ${discoverLabel}` : "",
+          chosenBrand ? `marca: ${chosenBrand}` : "",
+          query ? `busqueda inteligente: "${query}"` : ""
+        ].filter(Boolean).join(" · ");
+        resultsSummary.textContent = `${shown} de ${sorted.length} productos visibles${activeFilters ? ` · ${activeFilters}` : ""}`;
+        catalog.innerHTML = page.length
+          ? page.map(productCard).join("") + (sorted.length > visibleLimit ? `<button class="button load-more" id="loadMore">Ver más productos (${sorted.length - visibleLimit} restantes)</button>` : "")
+          : '<div class="empty">No hay productos visibles con esos filtros.</div>';
+
+        const loadMore = document.querySelector("#loadMore");
+        if (loadMore) {
+          loadMore.addEventListener("click", () => {
+            visibleLimit += 60;
+            render();
+          });
+        }
+      }
+
+      async function init() {
+        products = await CatalogData.loadProducts({ mode: "public" });
+        if (window.SupabaseDB) {
+          try {
+            const ids = products.map(p => p.id);
+            const variaciones = await SupabaseDB.fetchVariacionesBatch(ids);
+            const agrupadas = {};
+            for (const v of variaciones) {
+              if (!agrupadas[v.producto_id]) agrupadas[v.producto_id] = [];
+              agrupadas[v.producto_id].push(v);
+            }
+            variacionesPorProducto = {};
+            for (const [productoId, lista] of Object.entries(agrupadas)) {
+              variacionesPorProducto[productoId] = fusionarTonosDuplicados(lista);
+            }
+          } catch (e) { console.warn("Variaciones no disponibles:", e); }
+        }
+        setupFilters();
+        render();
+        whatsappTop.href = whatsappUrl(encodeURIComponent("¡Hola! 👋 Quiero hacer un pedido del catálogo de Malía Cosmetics."));
+        whatsappFloat.href = whatsappUrl(encodeURIComponent("¡Hola! 👋 Quiero saber más sobre los productos de Malía Cosmetics."));
+        if (whatsappHero) whatsappHero.href = whatsappUrl(encodeURIComponent("¡Hola! 👋 Quiero hacer un pedido del catálogo de Malía Cosmetics."));
+        if (whatsappFooter) whatsappFooter.href = whatsappUrl(encodeURIComponent("¡Hola! 👋 Quiero saber más sobre Malía Cosmetics."));
+        renderCart();
+      }
+
+      catalog.addEventListener("click", (event) => {
+        const viewBtn = event.target.closest("[data-view-product]");
+        if (viewBtn) {
+          openProductModal(viewBtn.dataset.viewProduct);
+          return;
+        }
+        const addBtn = event.target.closest(".add-to-cart-btn");
+        if (addBtn) {
+          const card = addBtn.closest(".product-card");
+          const tonoSelect = card ? card.querySelector(".tono-picker") : null;
+          const tono = tonoSelect ? tonoSelect.value : "";
+          addToCart(addBtn.dataset.id, tono);
+          return;
+        }
+        const toggle = event.target.closest(".tono-toggle");
+        if (!toggle) return;
+        event.preventDefault();
+        const list = toggle.closest(".tonos-list");
+        const extra = list.querySelector(".tonos-extra");
+        const expanded = toggle.dataset.expanded === "true";
+        extra.hidden = expanded;
+        toggle.textContent = expanded ? `+${toggle.dataset.count} más` : "Ver menos";
+        toggle.dataset.expanded = expanded ? "false" : "true";
+      });
+
+      productModal.addEventListener("click", (event) => {
+        if (event.target.closest("[data-close-product]")) {
+          closeProductModal();
+          return;
+        }
+        const thumb = event.target.closest(".product-thumb");
+        if (thumb) {
+          modalMainImage.src = thumb.dataset.src;
+          modalThumbs.querySelectorAll(".product-thumb").forEach((item) => item.classList.toggle("active", item === thumb));
+          return;
+        }
+        const addBtn = event.target.closest(".modal-add-cart");
+        if (addBtn) {
+          const tonoSelect = productModal.querySelector(".tono-picker");
+          addToCart(addBtn.dataset.id, tonoSelect ? tonoSelect.value : "");
+          closeProductModal();
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !productModal.hidden) closeProductModal();
+      });
+
+      heroSearch?.addEventListener("input", () => {
+        search.value = heroSearch.value;
+        visibleLimit = 60;
+        render();
+      });
+
+      search.addEventListener("input", () => {
+        if (heroSearch) heroSearch.value = search.value;
+      });
+
+      [search, brandFilter, sort].forEach((field) => field.addEventListener("input", () => {
+        discoverKeywords = null;
+        discoverLabel = "";
+        visibleLimit = 60;
+        render();
+      }));
+
+      // ─── Icono de busqueda del navbar: lleva a los filtros y enfoca el campo ───
+      const navSearchBtn = document.querySelector("#navSearchBtn");
+      navSearchBtn?.addEventListener("click", () => {
+        document.querySelector("#filtros")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        setTimeout(() => search.focus(), 450);
+      });
+
+      // ─── Tarjetas "Descubre Malía": filtran el catalogo por categoria real ─────
+      // Usa una lista de palabras clave (OR) contra categoria+nombre+marca+
+      // descripcion+tonos del producto, en vez de un solo termino literal —
+      // asi no se quedan productos afuera solo porque el nombre no incluye
+      // exactamente esa palabra.
+      document.querySelectorAll("[data-discover-keywords]").forEach((card) => {
+        card.addEventListener("click", () => {
+          discoverKeywords = card.dataset.discoverKeywords.split(",").map((k) => k.trim()).filter(Boolean);
+          discoverLabel = card.dataset.discoverLabel || "";
+          search.value = "";
+          if (heroSearch) heroSearch.value = "";
+          visibleLimit = 60;
+          render();
+          document.querySelector("#filtros")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      });
+
+      // ─── Menu movil (hamburguesa) ───────────────────────────────────────────────
+      const navToggle = document.querySelector("#navToggle");
+      const navLinks = document.querySelector("#navLinks");
+      navToggle?.addEventListener("click", () => {
+        const open = navLinks.classList.toggle("open");
+        navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+      navLinks?.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => navLinks.classList.remove("open")));
+
+      document.querySelector("#footerYear").textContent = new Date().getFullYear();
+      init();
+    </script>
+  </body>
+</html>
