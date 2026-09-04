@@ -146,13 +146,14 @@
         </div>
         <strong id="dashVisibleProducts">0</strong>
       </div>
-      <div class="metric-card">
-        <div class="metric-top">
-          <span>Pendientes de precio</span>
-          <span class="metric-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20.6 12.6 12 21.2 2.8 12 2.8 3.6 11.2 3.6 20.6 12.6Z"></path><circle cx="7.5" cy="8.5" r="1"></circle></svg></span>
-        </div>
-        <strong id="dashPendingProducts">0</strong>
-      </div>
+<div class="metric-card clickable" id="dashPendingPrices" onclick="window.PriceSearchTool.abrirBuscador()">
+  <div class="metric-top">
+    <span>Pendientes de precio</span>
+    <span class="metric-icon">...</span>
+  </div>
+  <strong id="dashPendingProducts">0</strong>
+  <small style="color: #7a6f72; font-size: 11px; margin-top: 6px;">Click para asignar</small>
+</div>
       <div class="metric-card">
         <div class="metric-top">
           <span>Sin stock</span>
