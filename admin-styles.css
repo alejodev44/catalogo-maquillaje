@@ -2346,3 +2346,13 @@ select.estado-oculto {
     grid-template-columns: 1fr;
   }
 }
+.metric-card.clickable {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.metric-card.clickable:hover {
+  background: #fff;
+  border-color: #c9a66b;
+  box-shadow: 0 4px 12px rgba(50, 24, 28, 0.08);
+}
