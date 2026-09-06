@@ -301,6 +301,7 @@
       const logoutBtn = document.querySelector("#logoutBtn");
       const historialBtn = document.querySelector("#historialBtn");
       let products = [];
+      let variacionesPorProducto = {};
 
       // ─── Nuevos: dashboard, edición masiva, historiales ────────────────────────
       const dashTotalProducts = document.querySelector("#dashTotalProducts");
@@ -440,8 +441,23 @@
       });
 
       // ─── Métricas del dashboard (los productos se editan en productos.html) ───
+      // Un producto puede llegar del proveedor con disponible_proveedor = true
+      // (ese campo general no se actualizó) mientras que TODOS sus tonos
+      // individuales están agotados. Sin este chequeo el dashboard sigue
+      // contando ese producto como disponible aunque no haya ningún tono que
+      // realmente se pueda vender — y sigue apareciendo en el catálogo público.
+      function tieneTonosTodosAgotados(product) {
+        const variaciones = variacionesPorProducto[product.id];
+        if (!variaciones || variaciones.length === 0) return false;
+        return !variaciones.some((v) => v.disponible);
+      }
+
+      function estaAgotadoReal(product) {
+        return !product.disponible_proveedor || tieneTonosTodosAgotados(product);
+      }
+
       function esAgotadoVisible(product) {
-        return !product.disponible_proveedor && product.mostrar_en_catalogo;
+        return estaAgotadoReal(product) && product.mostrar_en_catalogo;
       }
 
       function esStockBajo(product) {
@@ -449,10 +465,28 @@
         return typeof stock === "number" && stock > 0 && stock <= 3;
       }
 
+      async function cargarVariaciones() {
+        try {
+          const ids = products.map((p) => p.id);
+          const variaciones = await SupabaseDB.fetchVariacionesBatch(ids);
+          variacionesPorProducto = {};
+          for (const v of variaciones) {
+            if (!variacionesPorProducto[v.producto_id]) variacionesPorProducto[v.producto_id] = [];
+            variacionesPorProducto[v.producto_id].push(v);
+          }
+        } catch (e) {
+          console.warn("No se pudieron cargar las variaciones/tonos:", e);
+        }
+      }
+
       function renderStatsOnly() {
-        const visibles = products.filter((product) => product.mostrar_en_catalogo && product.disponible_proveedor).length;
+        // "Visibles" y "valor del inventario" usan la disponibilidad REAL
+        // (estaAgotadoReal, que revisa los tonos), no el flag crudo
+        // disponible_proveedor -- así este número coincide con lo que
+        // realmente se ve en el catálogo público.
+        const visibles = products.filter((product) => product.mostrar_en_catalogo && !estaAgotadoReal(product)).length;
         const pendientes = products.filter((product) => product.mi_precio <= 0).length;
-        const sinStock = products.filter((product) => !product.disponible_proveedor).length;
+        const sinStock = products.filter(estaAgotadoReal).length;
 
         dashTotalProducts.textContent = products.length.toLocaleString("es-CO");
         dashVisibleProducts.textContent = visibles.toLocaleString("es-CO");
@@ -462,7 +496,7 @@
         const agotVis = products.filter(esAgotadoVisible).length;
         const stockBajo = products.filter(esStockBajo).length;
         const valorInventario = products
-          .filter((p) => p.mostrar_en_catalogo && p.disponible_proveedor)
+          .filter((p) => p.mostrar_en_catalogo && !estaAgotadoReal(p))
           .reduce((sum, p) => sum + Number(p.mi_precio || 0), 0);
 
         dashAgotVis.textContent = agotVis;
@@ -501,6 +535,7 @@
           log("INIT", "Cargando productos desde Supabase...");
           products = await CatalogData.loadProducts({ mode: "admin" });
           log("INIT", `✅ ${products.length} productos cargados`);
+          await cargarVariaciones();
           renderStatsOnly();
           log("INIT", "✅ Panel admin completamente inicializado");
           cargarContadorPedidos();
@@ -1426,10 +1461,3 @@
   <script src="./price-search-tool.js"></script>
   </body>
 </html>
-
-
-
-
-
-
-
