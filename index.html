@@ -470,7 +470,7 @@ const brands = getSortedBrands();
       function normalizeText(value) {
         return String(value || "")
           .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[̀-ͯ]/g, "")
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, " ")
           .trim();
@@ -531,7 +531,7 @@ const brands = getSortedBrands();
       }
 
       function getBrandCount(brand) {
-        return products.filter((item) => normMarca(item.marca) === brand && item.mostrar_en_catalogo && item.disponible_proveedor).length;
+        return products.filter((item) => normMarca(item.marca) === brand && item.mostrar_en_catalogo && productoRealmenteDisponible(item)).length;
       }
 
       function renderBrandRail(brands) {
@@ -555,6 +555,7 @@ const brands = getSortedBrands();
       }
 
       let variacionesPorProducto = {};
+      let variacionesRawPorProducto = {};
 
       // ─── NORMALIZACIÓN DE TONOS ENTRE PROVEEDORES ───────────────────────────
       // Kroma y Magna escriben el mismo tono con formato distinto:
@@ -612,6 +613,21 @@ const brands = getSortedBrands();
             imagen: grupo.find((v) => v.imagen)?.imagen || representante.imagen,
           };
         });
+      }
+
+      // ─── Disponibilidad real (considerando tonos) ───────────────────────────
+      // Un producto puede llegar del proveedor con disponible_proveedor = true
+      // (el campo general de stock no se actualizó) pero con TODOS sus tonos
+      // agotados — por ejemplo cuando el producto "padre" en la tienda de
+      // origen queda marcado en stock aunque cada variación individual (cada
+      // tono) ya esté en 0. Sin este chequeo, ese producto se sigue mostrando
+      // como comprable en el catálogo público aunque no haya ningún tono que
+      // realmente se pueda vender.
+      function productoRealmenteDisponible(product) {
+        if (!product.disponible_proveedor) return false;
+        const variaciones = variacionesPorProducto[product.id] || [];
+        if (variaciones.length === 0) return true;
+        return variaciones.some((v) => v.disponible);
       }
 
       function productMessage(product, tono = "") {
@@ -672,7 +688,7 @@ const brands = getSortedBrands();
       // ─── Productos relacionados ("también te puede interesar") ────────────
       function relatedProducts(product, limit = 4) {
         const candidatos = products.filter((p) =>
-          p.id !== product.id && p.mostrar_en_catalogo && p.disponible_proveedor
+          p.id !== product.id && p.mostrar_en_catalogo && productoRealmenteDisponible(p)
         );
         const porCategoria = candidatos.filter((p) =>
           product.categoria && p.categoria === product.categoria
@@ -843,7 +859,7 @@ const brands = getSortedBrands();
               ${tonoPicker.html}
               <div class="price-row">
                 <span class="price">${product.mi_precio > 0 ? CatalogData.formatMoney(product.mi_precio) : "Consultar precio"}</span>
-                <span class="stock">${product.stock_texto || "Disponible"}</span>
+                <span class="stock">${tonoPicker.sinStock ? "Agotado" : (product.stock_texto || "Disponible")}</span>
               </div>
               <button type="button" class="button primary add-to-cart-btn" data-id="${product.id}" ${tonoPicker.sinStock ? "disabled" : ""}>${tonoPicker.sinStock ? "Agotado" : "Agregar al carrito"}</button>
             </div>
@@ -852,8 +868,15 @@ const brands = getSortedBrands();
       }
 
       function productGalleryImages(product) {
-        const variaciones = variacionesPorProducto[product.id] || [];
-        const images = [product.imagen, ...variaciones.map((v) => v.imagen)]
+        // OJO: usamos la lista SIN fusionar (variacionesRawPorProducto), no
+        // la fusionada por tono (variacionesPorProducto). fusionarTonosDuplicados
+        // solo conserva UNA foto por cada tono ya agrupado, así que si un
+        // producto está fusionado entre Kroma y Magna y ambos tienen su
+        // propia foto para el mismo tono, la fusión descartaba la del
+        // segundo proveedor. Aquí sí queremos ver TODAS las fotos de AMBOS
+        // proveedores en la galería, aunque se repita el tono.
+        const variacionesRaw = variacionesRawPorProducto[product.id] || [];
+        const images = [product.imagen, ...variacionesRaw.map((v) => v.imagen)]
           .filter(Boolean)
           .filter((src, index, arr) => arr.indexOf(src) === index);
         return images.length ? images : ["https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=900&q=80"];
@@ -872,6 +895,7 @@ const brands = getSortedBrands();
           </button>
         `).join("");
         const esFavorito = favoritos.has(product.id);
+        const modalTonoPicker = renderTonoPicker(variaciones, `modal-${product.id}`);
         modalInfo.innerHTML = `
           <div class="modal-title-row">
             <div>
@@ -888,10 +912,10 @@ const brands = getSortedBrands();
           ${renderTonosPill(variaciones)}
           <div class="modal-price-row">
             <strong>${product.mi_precio > 0 ? CatalogData.formatMoney(product.mi_precio) : "Consultar precio"}</strong>
-            <span>${product.stock_texto || "Disponible"}</span>
+            <span>${modalTonoPicker.sinStock ? "Agotado" : (product.stock_texto || "Disponible")}</span>
           </div>
-          ${renderTonoPicker(variaciones, `modal-${product.id}`).html}
-          <button type="button" class="button primary modal-add-cart" data-id="${product.id}">Agregar al carrito</button>
+          ${modalTonoPicker.html}
+          <button type="button" class="button primary modal-add-cart" data-id="${product.id}" ${modalTonoPicker.sinStock ? "disabled" : ""}>${modalTonoPicker.sinStock ? "Agotado" : "Agregar al carrito"}</button>
           ${relatedProductsHtml(product)}
           <div class="reviews-section" id="reviewsSection" data-product-id="${product.id}">
             <h3>Reseñas</h3>
@@ -1543,7 +1567,7 @@ const brands = getSortedBrands();
         const query = search.value.trim();
         const chosenBrand = brandFilter.value;
         let sorted = products
-          .filter((product) => product.mostrar_en_catalogo && product.disponible_proveedor)
+          .filter((product) => product.mostrar_en_catalogo && productoRealmenteDisponible(product))
           .filter((product) => !chosenBrand || normMarca(product.marca) === chosenBrand)
           .filter((product) => !showOnlyFavorites || favoritos.has(product.id))
           .filter((product) => matchesDiscoverKeywords(product, discoverKeywords))
@@ -1554,7 +1578,7 @@ const brands = getSortedBrands();
 
         if (query && sorted.length < 8) {
           sorted = products
-            .filter((product) => product.mostrar_en_catalogo && product.disponible_proveedor)
+            .filter((product) => product.mostrar_en_catalogo && productoRealmenteDisponible(product))
             .filter((product) => !chosenBrand || normMarca(product.marca) === chosenBrand)
             .filter((product) => !showOnlyFavorites || favoritos.has(product.id))
             .filter((product) => matchesDiscoverKeywords(product, discoverKeywords))
@@ -1604,6 +1628,7 @@ const brands = getSortedBrands();
               agrupadas[v.producto_id].push(v);
             }
             variacionesPorProducto = {};
+            variacionesRawPorProducto = agrupadas;
             for (const [productoId, lista] of Object.entries(agrupadas)) {
               variacionesPorProducto[productoId] = fusionarTonosDuplicados(lista);
             }
