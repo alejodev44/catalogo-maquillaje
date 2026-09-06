@@ -39,80 +39,6 @@
 
       .productos-table-wrap.table-wrap { max-height: calc(100vh - 210px); }
       .productos-page table { min-width: 1200px; }
-
-      /* ─── Panel de duplicados ────────────────────────────────────────── */
-      .duplicados-overlay {
-        position: fixed; inset: 0; background: rgba(20,10,14,0.45);
-        z-index: 300; display: none;
-      }
-      .duplicados-overlay.open { display: block; }
-      
-      .duplicados-panel {
-        position: fixed; top: 0; right: 0; bottom: 0; width: min(700px, 100%);
-        background: #fff; z-index: 301; display: flex; flex-direction: column;
-        transform: translateX(100%); transition: transform 0.25s ease;
-        box-shadow: -8px 0 30px rgba(0,0,0,0.15);
-      }
-      .duplicados-panel.open { transform: translateX(0); }
-      
-      .duplicados-panel-header {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 16px 18px; border-bottom: 1px solid #eadfe1;
-      }
-      .duplicados-panel-close {
-        background: none; border: none; cursor: pointer; font-size: 20px;
-        color: #a3606f; transition: color .15s;
-      }
-      .duplicados-panel-close:hover { color: #8f183d; }
-      
-      .duplicados-panel-body {
-        flex: 1; overflow-y: auto; padding: 16px 18px;
-      }
-      
-      .duplicados-compare-panel {
-        display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px;
-      }
-      .duplicados-version {
-        border: 1px solid #eadfe1; border-radius: 12px; padding: 16px;
-        background: #faf9f9;
-      }
-      .duplicados-version-label {
-        font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
-        color: #a3606f; font-weight: 700; margin-bottom: 12px; display: block;
-      }
-      .duplicados-version-info {
-        display: flex; flex-direction: column; gap: 10px; font-size: 13px;
-      }
-      .duplicados-version-field {
-        display: grid; grid-template-columns: 80px 1fr; gap: 8px; align-items: flex-start;
-      }
-      .duplicados-version-field strong { color: #6f6265; }
-      .duplicados-version-field span { color: #211A1D; word-break: break-word; }
-      
-      .duplicados-actions {
-        display: flex; gap: 8px; padding-top: 16px; border-top: 1px solid #eadfe1;
-        margin-top: 18px;
-      }
-      .duplicados-actions button {
-        flex: 1; padding: 10px 14px; border-radius: 9px; border: 1px solid #eadfe1;
-        background: #fff; font-size: 13px; font-weight: 700; cursor: pointer;
-        transition: background .15s, border-color .15s;
-      }
-      .duplicados-actions button:hover { background: #faf3f4; }
-      .duplicados-actions button.danger { background: #fff5f5; border-color: #f0d3d3; color: #a33; }
-      .duplicados-actions button.danger:hover { background: #ffe8e8; }
-
-      /* ─── Indicador de duplicado en tabla ─────────────────────────────── */
-      .row-duplicado-badge {
-        display: inline-flex; align-items: center; gap: 4px;
-        padding: 2px 6px; background: #fdf2f8; border-radius: 6px;
-        font-size: 11px; font-weight: 700; color: #8f183d; cursor: pointer;
-        transition: background .15s;
-      }
-      .row-duplicado-badge:hover { background: #f8e5ec; }
-      .row-duplicado-badge-icon {
-        width: 14px; height: 14px; display: flex; align-items: center; justify-content: center;
-      }
     </style>
   </head>
   <body class="admin-page admin-locked productos-page">
@@ -178,6 +104,7 @@
             <option value="hidden">Ocultos</option>
             <option value="out">Sin stock</option>
             <option value="agotado_visible">Agotados pero visibles</option>
+            <option value="tonos_cero">Marcado disponible, tonos en 0</option>
             <option value="stock_bajo">Stock bajo (≤3)</option>
           </select>
         </div>
@@ -268,18 +195,6 @@
       </div>
     </main>
 
-    <!-- Panel de duplicados -->
-    <div class="duplicados-overlay" id="duplicadosOverlay"></div>
-    <div class="duplicados-panel" id="duplicadosPanel">
-      <div class="duplicados-panel-header">
-        <h3>Producto fusionado</h3>
-        <button class="duplicados-panel-close" id="duplicadosPanelClose" aria-label="Cerrar panel">×</button>
-      </div>
-      <div class="duplicados-panel-body" id="duplicadosPanelBody">
-        <!-- Contenido dinámico aquí -->
-      </div>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="./supabase.js"></script>
@@ -312,6 +227,7 @@
       const nextPageBtn = document.querySelector("#nextPageBtn");
       const pageIndicator = document.querySelector("#pageIndicator");
       let products = [];
+      let variacionesPorProducto = {};
       let currentPage = 1;
       const PAGE_SIZE = 100;
 
@@ -353,12 +269,6 @@
 
       function normMarca(marca) {
         return marca && String(marca).trim() ? marca : "Sin marca";
-      }
-
-      function escHtml(v) {
-        return String(v ?? "").replace(/[&<>"']/g, (c) => ({
-          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-        }[c]));
       }
 
       // ─── LOGGING & DEBUG ─────────────────────────────────────────────────────
@@ -443,8 +353,28 @@
         return `<input type="${type}" value="${String(value ?? "").replaceAll('"', "&quot;")}" data-field="${field}" data-index="${index}">`;
       }
 
+      // ─── Tonos: disponibilidad real más allá del campo general del proveedor ──
+      // Un producto puede quedar marcado disponible_proveedor = true (el
+      // proveedor no actualizó ese campo general) mientras que TODOS sus
+      // tonos individuales están agotados. Sin este chequeo el panel sigue
+      // mostrándolo como "Disponible" y por lo tanto se sigue mostrando en
+      // el catálogo público aunque no haya ningún tono que se pueda vender.
+      function tieneTonosTodosAgotados(product) {
+        const variaciones = variacionesPorProducto[product.id];
+        if (!variaciones || variaciones.length === 0) return false;
+        return !variaciones.some((v) => v.disponible);
+      }
+
+      function estaAgotadoReal(product) {
+        return !product.disponible_proveedor || tieneTonosTodosAgotados(product);
+      }
+
+      function marcadoDisponiblePeroTonosEnCero(product) {
+        return Boolean(product.disponible_proveedor) && tieneTonosTodosAgotados(product);
+      }
+
       function esAgotadoVisible(product) {
-        return !product.disponible_proveedor && product.mostrar_en_catalogo;
+        return estaAgotadoReal(product) && product.mostrar_en_catalogo;
       }
 
       function esStockBajo(product) {
@@ -452,18 +382,18 @@
         return typeof stock === "number" && stock > 0 && stock <= 3;
       }
 
-      // ─── FUNCIONES DE DUPLICADOS ────────────────────────────────────────
-      function isFusionada(product) {
-        const notas = product.notas || "";
-        return notas.includes("Fusionado con");
-      }
-
-      function obtenerProductoFusionado(product) {
-        const notas = product.notas || "";
-        const match = notas.match(/Fusionado con ([a-z0-9\-]+)/i);
-        if (!match) return null;
-        const otherProductId = match[1];
-        return products.find((p) => p.id === otherProductId);
+      async function cargarVariaciones() {
+        try {
+          const ids = products.map((p) => p.id);
+          const variaciones = await SupabaseDB.fetchVariacionesBatch(ids);
+          variacionesPorProducto = {};
+          for (const v of variaciones) {
+            if (!variacionesPorProducto[v.producto_id]) variacionesPorProducto[v.producto_id] = [];
+            variacionesPorProducto[v.producto_id].push(v);
+          }
+        } catch (e) {
+          console.warn("No se pudieron cargar las variaciones/tonos:", e);
+        }
       }
 
       function renderRows() {
@@ -481,8 +411,9 @@
             if (status === "priced" && product.mi_precio <= 0) return false;
             if (status === "visible" && !product.mostrar_en_catalogo) return false;
             if (status === "hidden" && product.mostrar_en_catalogo) return false;
-            if (status === "out" && product.disponible_proveedor) return false;
+            if (status === "out" && !estaAgotadoReal(product)) return false;
             if (status === "agotado_visible" && !esAgotadoVisible(product)) return false;
+            if (status === "tonos_cero" && !marcadoDisponiblePeroTonosEnCero(product)) return false;
             if (status === "stock_bajo" && !esStockBajo(product)) return false;
             return true;
           });
@@ -501,18 +432,15 @@
         rows.innerHTML = filtered.map(({ product, index }) => {
           const alertas = [
             esAgotadoVisible(product) ? '<span class="row-alert danger">Agotado visible</span>' : "",
+            marcadoDisponiblePeroTonosEnCero(product) ? '<span class="row-alert danger">Tonos en 0</span>' : "",
             esStockBajo(product) ? '<span class="row-alert warning">Stock bajo</span>' : "",
           ].filter(Boolean).join(" ");
           const checked = selectedIds.has(product.id) ? "checked" : "";
           const trClass = selectedIds.has(product.id) ? ' class="row-selected"' : "";
-          const esFusionada = isFusionada(product);
-          const badgeFusionada = esFusionada 
-            ? `<span class="row-duplicado-badge" data-product-id="${product.id}"><span class="row-duplicado-badge-icon">⧉</span> Fusionado</span>`
-            : "";
           return `
           <tr${trClass}>
             <td class="checkbox-col"><input type="checkbox" class="row-checkbox" data-id="${product.id}" ${checked}></td>
-            <td>${input(product.id, "id", index)}<br><span class="help">${product.sku || ""}</span>${badgeFusionada}${alertas ? `<br>${alertas}` : ""}</td>
+            <td>${input(product.id, "id", index)}<br><span class="help">${product.sku || ""}</span>${alertas ? `<br>${alertas}` : ""}</td>
             <td>${input(product.nombre, "nombre", index)}</td>
             <td>${input(product.marca, "marca", index)}</td>
             <td>${input(product.categoria, "categoria", index)}</td>
@@ -609,165 +537,11 @@
         renderStatsOnly();
       }
 
-      // ─── PANEL DE DUPLICADOS ────────────────────────────────────────────
-      const duplicadosOverlay = document.querySelector("#duplicadosOverlay");
-      const duplicadosPanel = document.querySelector("#duplicadosPanel");
-      const duplicadosPanelClose = document.querySelector("#duplicadosPanelClose");
-      const duplicadosPanelBody = document.querySelector("#duplicadosPanelBody");
-
-      function openDuplicadosPanel(productId) {
-        const mainProduct = products.find((p) => p.id === productId);
-        if (!mainProduct) return;
-        
-        const fusionedProduct = obtenerProductoFusionado(mainProduct);
-        if (!fusionedProduct) return;
-
-        // Determinar cuál es Magna y cuál es Kroma
-        const isMagnaMain = mainProduct.id.startsWith("magna-");
-        const mainProv = isMagnaMain ? "Magna Cosmetics" : "Kroma";
-        const fusedProv = isMagnaMain ? "Kroma" : "Magna Cosmetics";
-
-        const panelHtml = `
-          <div class="duplicados-compare-panel">
-            <div class="duplicados-version">
-              <span class="duplicados-version-label">${mainProv}</span>
-              <div class="duplicados-version-info">
-                <div class="duplicados-version-field">
-                  <strong>ID:</strong>
-                  <span>${escHtml(mainProduct.id)}</span>
-                </div>
-                <div class="duplicados-version-field">
-                  <strong>Producto:</strong>
-                  <span>${escHtml(mainProduct.nombre)}</span>
-                </div>
-                <div class="duplicados-version-field">
-                  <strong>Marca:</strong>
-                  <span>${escHtml(mainProduct.marca)}</span>
-                </div>
-                <div class="duplicados-version-field">
-                  <strong>Mayorista:</strong>
-                  <span>${mainProduct.precio_mayorista || "—"}</span>
-                </div>
-                <div class="duplicados-version-field">
-                  <strong>Detal ref:</strong>
-                  <span>${mainProduct.precio_referencia || "—"}</span>
-                </div>
-                <div class="duplicados-version-field">
-                  <strong>Mi precio:</strong>
-                  <span>${mainProduct.mi_precio || "—"}</span>
-                </div>
-                <div class="duplicados-version-field">
-                  <strong>Disponible:</strong>
-                  <span>${mainProduct.disponible_proveedor ? "Sí" : "No"}</span>
-                </div>
-                <div class="duplicados-version-field">
-                  <strong>Stock:</strong>
-                  <span>${mainProduct.stock_proveedor || "—"}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="duplicados-version">
-              <span class="duplicados-version-label">${fusedProv}</span>
-              <div class="duplicados-version-info">
-                <div class="duplicados-version-field">
-                  <strong>ID:</strong>
-                  <span>${escHtml(fusionedProduct.id)}</span>
-                </div>
-                <div class="duplicados-version-field">
-                  <strong>Producto:</strong>
-                  <span>${escHtml(fusionedProduct.nombre)}</span>
-                </div>
-                <div class="duplicados-version-field">
-                  <strong>Marca:</strong>
-                  <span>${escHtml(fusionedProduct.marca)}</span>
-                </div>
-                <div class="duplicados-version-field">
-                  <strong>Mayorista:</strong>
-                  <span>${fusionedProduct.precio_mayorista || "—"}</span>
-                </div>
-                <div class="duplicados-version-field">
-                  <strong>Detal ref:</strong>
-                  <span>${fusionedProduct.precio_referencia || "—"}</span>
-                </div>
-                <div class="duplicados-version-field">
-                  <strong>Mi precio:</strong>
-                  <span>${fusionedProduct.mi_precio || "—"}</span>
-                </div>
-                <div class="duplicados-version-field">
-                  <strong>Disponible:</strong>
-                  <span>${fusionedProduct.disponible_proveedor ? "Sí" : "No"}</span>
-                </div>
-                <div class="duplicados-version-field">
-                  <strong>Stock:</strong>
-                  <span>${fusionedProduct.stock_proveedor || "—"}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="duplicados-actions">
-            <button type="button" data-desfusionar="${productId}">↔️ Desfusionar</button>
-            <button type="button" class="danger" data-ocultar-fusion="${productId}">Ocultar fusionado</button>
-          </div>
-        `;
-
-        duplicadosPanelBody.innerHTML = panelHtml;
-        duplicadosOverlay.classList.add("open");
-        duplicadosPanel.classList.add("open");
-      }
-
-      function closeDuplicadosPanel() {
-        duplicadosOverlay.classList.remove("open");
-        duplicadosPanel.classList.remove("open");
-      }
-
-      duplicadosPanelClose.addEventListener("click", closeDuplicadosPanel);
-      duplicadosOverlay.addEventListener("click", closeDuplicadosPanel);
-
-      // Event delegation para el panel de duplicados
-      duplicadosPanelBody.addEventListener("click", (event) => {
-        const desfusionarBtn = event.target.closest("[data-desfusionar]");
-        if (desfusionarBtn) {
-          const productId = desfusionarBtn.dataset.desfusionar;
-          const product = products.find((p) => p.id === productId);
-          if (product && confirm("¿Desfusionar? Esto separará los productos pero NO los eliminará.")) {
-            product.notas = (product.notas || "").replace(/Fusionado con [a-z0-9\-]+/i, "").trim();
-            closeDuplicadosPanel();
-            renderRows();
-          }
-          return;
-        }
-
-        const ocultarBtn = event.target.closest("[data-ocultar-fusion]");
-        if (ocultarBtn) {
-          const productId = ocultarBtn.dataset.ocultarFusion;
-          const product = products.find((p) => p.id === productId);
-          if (product) {
-            const otherProduct = obtenerProductoFusionado(product);
-            if (otherProduct && confirm("¿Ocultar el producto fusionado? Solo verás el producto principal.")) {
-              otherProduct.mostrar_en_catalogo = false;
-              closeDuplicadosPanel();
-              renderRows();
-            }
-          }
-        }
-      });
-
-      // Event listener para badges de "Fusionado"
-      rows.addEventListener("click", (event) => {
-        const badge = event.target.closest(".row-duplicado-badge");
-        if (badge) {
-          const productId = badge.dataset.productId;
-          openDuplicadosPanel(productId);
-        }
-      });
-
       function renderStatsOnly() {
         totalProducts.textContent = products.length;
         visibleProducts.textContent = products.filter((product) => product.mostrar_en_catalogo && product.disponible_proveedor).length;
         pendingProducts.textContent = products.filter((product) => product.mi_precio <= 0).length;
-        outProducts.textContent = products.filter((product) => !product.disponible_proveedor).length;
+        outProducts.textContent = products.filter(estaAgotadoReal).length;
       }
 
       async function importProducts(file) {
@@ -807,6 +581,7 @@
         try {
           checkDependencies();
           products = await CatalogData.loadProducts({ mode: "admin" });
+          await cargarVariaciones();
           setupAdminBrands();
           aplicarFiltroDesdeUrl();
           renderRows();
@@ -935,6 +710,7 @@
           const avisoOmitidos = resultado.omitidos > 0 ? `\n⚠️ ${resultado.omitidos} ítems de Kroma llegaron sin datos completos y se omitieron (no se guardaron como producto fantasma).` : "";
           alert(`✅ ${resultado.guardados} productos importados de ${resultado.total}${avisoOmitidos}`);
           products = await CatalogData.loadProducts({ mode: "admin" });
+          await cargarVariaciones();
           setupAdminBrands();
           renderRows();
           dispararAlertaStock();
@@ -960,6 +736,7 @@
           if (!resultado.success) throw new Error(resultado.error);
           alert(`✅ Stock actualizado: ${resultado.sin_stock} productos sin existencias`);
           products = await CatalogData.loadProducts({ mode: "admin" });
+          await cargarVariaciones();
           setupAdminBrands();
           renderRows();
           dispararAlertaStock();
@@ -1002,6 +779,8 @@
           } else {
             alert(`✅ Ciclo completo de tonos sincronizado (${totalGuardados} tonos guardados en total en esta sesión, ${avanceAcumulado}/${totalCatalogo} productos cubiertos).`);
           }
+          await cargarVariaciones();
+          renderRows();
         } catch (err) {
           alert(`❌ Error: ${err.message}`);
         } finally {
@@ -1029,6 +808,7 @@
           if (!resultado.success) throw new Error(resultado.error);
           alert(`OK: ${resultado.productos_magna} productos propios de Magna guardados / ${resultado.productos_fusionados_con_otro_proveedor} ya existian de otro proveedor y se fusionaron (sin duplicar)`);
           products = await CatalogData.loadProducts({ mode: "admin" });
+          await cargarVariaciones();
           setupAdminBrands();
           renderRows();
           dispararAlertaStock();
@@ -1054,6 +834,7 @@
           if (!resultado.success) throw new Error(resultado.error);
           alert(`OK: stock de Magna actualizado. ${resultado.sin_stock} sin existencias / ${resultado.fusionados} fusionados con otro proveedor`);
           products = await CatalogData.loadProducts({ mode: "admin" });
+          await cargarVariaciones();
           setupAdminBrands();
           renderRows();
           dispararAlertaStock();
@@ -1066,7 +847,7 @@
       });
 
       syncMagnaTonosBtn?.addEventListener("click", async () => {
-        if (!confirm("Sincronizar tonos desde Magna Cosmetics? En catálogos grandes esto hace muchos ciclos cortos automáticos (es normal que algunos se corten por límite de la plataforma, el progreso no se pierde) hasta completar una vuelta entera. Puede tomar varios minutos.")) return;
+        if (!confirm("¿Sincronizar tonos desde Magna Cosmetics? En catálogos grandes esto hace muchos ciclos cortos automáticos (es normal que algunos se corten por límite de la plataforma, el progreso no se pierde) hasta completar una vuelta entera. Puede tomar varios minutos.")) return;
         syncMagnaTonosBtn.disabled = true;
         const MAX_CORRIDAS = 60;
         let totalGuardados = 0;
@@ -1116,6 +897,7 @@
             alert(`✅ Ciclo completo de tonos de Magna sincronizado (${totalGuardados} tonos guardados en total).`);
           }
           products = await CatalogData.loadProducts({ mode: "admin" });
+          await cargarVariaciones();
           setupAdminBrands();
           renderRows();
         } catch (err) {
