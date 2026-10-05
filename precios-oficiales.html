@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Malía Cosmetics | Precios oficiales</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" type="image/png" href="./assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./admin-styles.css?v=malia-2">
+    <style>
+      .po-shell { max-width: 1100px; margin: 0 auto; padding: 28px 24px 80px; }
+      .po-back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #8f183d; text-decoration: none; font-weight: 700; margin-bottom: 18px; }
+      .po-back:hover { text-decoration: underline; }
+      .po-header { margin-bottom: 24px; }
+      .po-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 18px; }
+      .po-count { font-size: 13px; color: #6f6265; }
+      .po-filtro { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #211A1D; font-weight: 600; }
+
+      .po-list { display: grid; gap: 20px; margin-top: 24px; }
+
+      .po-card {
+        border: 1px solid #eadfe1; border-radius: 14px; background: #fff;
+        padding: 22px 26px; box-shadow: 0 10px 28px rgba(50,24,28,.06);
+      }
+      .po-compare { display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; align-items: center; }
+      .po-lado { display: flex; gap: 16px; align-items: flex-start; min-width: 0; }
+      .po-lado img {
+        width: 88px; height: 88px; object-fit: cover; border-radius: 10px;
+        border: 1px solid #eadfe1; flex-shrink: 0; background: #f8edef;
+      }
+      .po-lado .info { min-width: 0; }
+      .po-etiqueta {
+        font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+        color: #a3606f; font-weight: 700; margin-bottom: 4px; display: block;
+      }
+      .po-nombre { font-size: 16px; font-weight: 700; line-height: 1.35; color: #211A1D; overflow-wrap: anywhere; }
+      .po-nombre a { color: inherit; }
+      .po-detalle { font-size: 12.5px; color: #6f6265; margin-top: 4px; }
+      .po-precio { font-family: "Playfair Display", serif; font-size: 18px; color: #8f183d; margin-top: 6px; }
+
+      .po-score {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 4px; padding: 10px 16px; border-radius: 12px; background: #fdf2f6;
+      }
+      .po-score strong { font-size: 20px; color: #8f183d; line-height: 1; }
+      .po-score span { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: #a3606f; white-space: nowrap; }
+
+      .po-acciones {
+        display: flex; gap: 10px; justify-content: flex-end; align-items: center; flex-wrap: wrap;
+        margin-top: 18px; padding-top: 16px; border-top: 1px solid #f1e5e8;
+      }
+      .po-aviso { font-size: 12.5px; color: #8A6A35; margin-right: auto; }
+      .po-acciones button {
+        padding: 10px 20px; border-radius: 9px; border: 1px solid #eadfe1;
+        background: #fff; font-size: 13px; font-weight: 700; cursor: pointer;
+        transition: background .15s, border-color .15s;
+      }
+      .po-acciones button.confirmar { background: #8f183d; color: #fff; border-color: #8f183d; }
+      .po-acciones button:disabled { opacity: .5; cursor: not-allowed; }
+      @media (hover: hover) and (pointer: fine) {
+        .po-acciones button:hover:not(:disabled) { background: #faf3f4; }
+        .po-acciones button.confirmar:hover:not(:disabled) { background: #74132f; }
+      }
+
+      .po-mas { display: flex; justify-content: center; margin-top: 24px; }
+      .po-empty { text-align: center; padding: 60px 20px; color: #6f6265; }
+      .po-empty strong { display: block; font-size: 18px; color: #211A1D; margin-bottom: 8px; font-family: "Playfair Display", serif; }
+
+      @media (max-width: 720px) {
+        .po-shell { padding: 20px 16px 60px; }
+        .po-card { padding: 18px 16px; }
+        .po-compare { grid-template-columns: 1fr; }
+        .po-score { flex-direction: row; justify-self: start; }
+      }
+    </style>
+  </head>
+  <body class="admin-page admin-locked">
+    <section class="auth-lock" id="authLock">
+      <div class="auth-box">
+        <div class="brand auth-brand">
+          <span class="brand-mark logo-mark"><img src="./assets/malia-logo.png" alt="Malía Cosmetics"></span><span>Malía Cosmetics privado</span>
+        </div>
+        <h1>Inicia sesion</h1>
+        <p class="help">Este panel es solo para administrar el catálogo.</p>
+        <div class="field">
+          <label for="emailInput">Correo</label>
+          <input id="emailInput" type="email" autocomplete="username" placeholder="tu@correo.com">
+        </div>
+        <div class="field">
+          <label for="pinInput">Contrasena</label>
+          <input id="pinInput" type="password" autocomplete="current-password" placeholder="Contrasena">
+        </div>
+        <button class="button primary" id="unlockBtn">Entrar</button>
+        <p class="help auth-error" id="authError"></p>
+      </div>
+    </section>
+
+    <header class="topbar">
+      <div class="brand">
+        <img class="brand-logo" src="./assets/malia-logo.png" alt="Malía Cosmetics">
+      </div>
+      <div class="header-actions">
+        <a class="ghost-link" href="./admin.html">← Volver al panel</a>
+        <button class="button ghost" id="logoutBtn">Cerrar sesion</button>
+      </div>
+    </header>
+
+    <main class="po-shell">
+      <a class="po-back" href="./admin.html">← Volver al panel de administración</a>
+
+      <div class="po-header">
+        <p class="eyebrow">Precios automáticos</p>
+        <h1>Precios de tiendas oficiales por revisar</h1>
+        <p class="help">
+          Cada noche se leen los precios de las tiendas oficiales de las marcas. Cuando
+          el producto coincide con seguridad se usa solo; estos son los casos dudosos.
+          Si es el mismo producto, confírmalo y tu precio quedará un poco por debajo
+          del oficial (siempre ganando al menos 10 %). Si no es el mismo, descártalo:
+          se sigue usando el detal de Magna. Lo que decidas se recuerda.
+        </p>
+        <div class="po-toolbar">
+          <span class="po-count" id="poCount"></span>
+          <label class="po-filtro"><input type="checkbox" id="soloVisibles" checked> Solo productos a la venta</label>
+          <button type="button" class="button outline-soft" id="poRefreshBtn">Actualizar lista</button>
+        </div>
+      </div>
+
+      <div id="poList" class="po-list">
+        <p class="help">Cargando...</p>
+      </div>
+      <div class="po-mas"><button type="button" class="button outline-soft" id="poMasBtn" hidden>Mostrar más</button></div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="./supabase.js?v=malia-4"></script>
+    <script src="./app.js?v=malia-4"></script>
+    <script>
+      const authLock = document.querySelector("#authLock");
+      const emailInput = document.querySelector("#emailInput");
+      const pinInput = document.querySelector("#pinInput");
+      const unlockBtn = document.querySelector("#unlockBtn");
+      const authError = document.querySelector("#authError");
+      const logoutBtn = document.querySelector("#logoutBtn");
+
+      const poList = document.querySelector("#poList");
+      const poCount = document.querySelector("#poCount");
+      const poRefreshBtn = document.querySelector("#poRefreshBtn");
+      const poMasBtn = document.querySelector("#poMasBtn");
+      const soloVisibles = document.querySelector("#soloVisibles");
+
+      const POR_PAGINA = 40;
+      let pendientes = [];
+      let mostrados = 0;
+
+      function escHtml(v) {
+        return String(v ?? "").replace(/[&<>"']/g, (c) => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+        }[c]));
+      }
+
+      function urlSegura(u) {
+        return /^https:\/\//i.test(String(u || "")) ? escHtml(u) : "";
+      }
+
+      function dinero(n) {
+        return Number(n) > 0 ? CatalogData.formatMoney(Number(n)) : "—";
+      }
+
+      function cardHtml(r) {
+        const p = r.productos || {};
+        const scorePct = Math.round((Number(r.score) || 0) * 100);
+        const url = urlSegura(r.url);
+        const sinPrecio = !(Number(r.precio) > 0);
+        return `
+          <div class="po-card" data-id="${escHtml(r.producto_id)}">
+            <div class="po-compare">
+              <div class="po-lado">
+                <img src="${urlSegura(p.imagen)}" alt="" onerror="this.style.visibility='hidden'">
+                <div class="info">
+                  <span class="po-etiqueta">Tu producto</span>
+                  <div class="po-nombre">${escHtml(p.nombre)}</div>
+                  <div class="po-detalle">${escHtml(p.marca)} · Detal Magna ${dinero(p.precio_referencia)}</div>
+                  <div class="po-precio">${dinero(p.mi_precio)}</div>
+                </div>
+              </div>
+              <div class="po-score">
+                <strong>${r.via === "sku" ? "SKU" : scorePct + "%"}</strong>
+                <span>${r.via === "sku" ? "mismo código" : "similar"}</span>
+              </div>
+              <div class="po-lado">
+                <img src="${urlSegura(r.imagen)}" alt="" onerror="this.style.visibility='hidden'">
+                <div class="info">
+                  <span class="po-etiqueta">Tienda oficial · ${escHtml(r.tienda)}</span>
+                  <div class="po-nombre">${url ? `<a href="${url}" target="_blank" rel="noreferrer">${escHtml(r.titulo_oficial)} ↗</a>` : escHtml(r.titulo_oficial)}</div>
+                  <div class="po-precio">${sinPrecio ? "Precio distinto por tono" : dinero(r.precio)}</div>
+                </div>
+              </div>
+            </div>
+            <div class="po-acciones">
+              ${sinPrecio ? '<span class="po-aviso">La tienda tiene precios distintos por tono: no se puede usar como referencia.</span>' : ""}
+              <button type="button" data-accion="descartar">No es el mismo</button>
+              <button type="button" class="confirmar" data-accion="confirmar" ${sinPrecio ? "disabled" : ""}>Es el mismo</button>
+            </div>
+          </div>
+        `;
+      }
+
+      function filtrados() {
+        return soloVisibles.checked ? pendientes.filter((r) => r.productos?.mostrar_en_catalogo) : pendientes;
+      }
+
+      function actualizarConteo() {
+        const total = filtrados().length;
+        poCount.textContent = total ? `${total} por revisar` : "";
+        if (!total) {
+          poList.innerHTML = '<div class="po-empty"><strong>Nada por revisar</strong>Todos los precios oficiales están resueltos por ahora.</div>';
+        }
+        poMasBtn.hidden = mostrados >= total;
+      }
+
+      function pintar(reiniciar) {
+        const lista = filtrados();
+        if (reiniciar) {
+          poList.innerHTML = "";
+          mostrados = 0;
+        }
+        const tramo = lista.slice(mostrados, mostrados + POR_PAGINA);
+        poList.insertAdjacentHTML("beforeend", tramo.map(cardHtml).join(""));
+        mostrados += tramo.length;
+        actualizarConteo();
+      }
+
+      async function cargar() {
+        poList.innerHTML = '<p class="help">Cargando...</p>';
+        poCount.textContent = "";
+        poMasBtn.hidden = true;
+        try {
+          const db = SupabaseDB.getClient();
+          const filas = [];
+          for (let desde = 0; ; desde += 1000) {
+            const { data, error } = await db
+              .from("precios_oficiales")
+              .select("producto_id, tienda, handle, titulo_oficial, url, imagen, precio, via, score, handles_descartados, productos(nombre, marca, imagen, precio_referencia, mi_precio, mostrar_en_catalogo)")
+              .eq("estado", "pendiente")
+              .order("producto_id")
+              .range(desde, desde + 999);
+            if (error) throw error;
+            filas.push(...(data || []));
+            if (!data || data.length < 1000) break;
+          }
+          pendientes = filas.sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0));
+          pintar(true);
+        } catch (err) {
+          poList.innerHTML = `<p class="help">Error cargando: ${escHtml(err.message || String(err))}</p>`;
+        }
+      }
+
+      poList.addEventListener("click", async (ev) => {
+        const btn = ev.target.closest("button[data-accion]");
+        if (!btn) return;
+        const card = btn.closest(".po-card");
+        const id = card.dataset.id;
+        const fila = pendientes.find((r) => r.producto_id === id);
+        if (!fila) return;
+        const confirmar = btn.dataset.accion === "confirmar";
+
+        card.querySelectorAll("button").forEach((b) => (b.disabled = true));
+        try {
+          const db = SupabaseDB.getClient();
+          const cambios = confirmar
+            ? { estado: "confirmado" }
+            : { estado: "descartado", handles_descartados: [...(fila.handles_descartados || []), fila.handle] };
+          const r1 = await db.from("precios_oficiales").update(cambios).eq("producto_id", id).select("producto_id");
+          if (r1.error) throw r1.error;
+          if (!r1.data?.length) throw new Error("No se guardó (¿sesión vencida?)");
+
+          const r2 = await db.from("productos")
+            .update({ precio_oficial: confirmar ? Number(fila.precio) : null })
+            .eq("id", id)
+            .select("mi_precio");
+          if (r2.error) throw r2.error;
+
+          pendientes = pendientes.filter((r) => r.producto_id !== id);
+          card.remove();
+          mostrados = Math.max(0, mostrados - 1);
+          actualizarConteo();
+        } catch (err) {
+          alert(`❌ Error: ${err.message || err}`);
+          card.querySelectorAll("button").forEach((b) => (b.disabled = false));
+        }
+      });
+
+      poMasBtn.addEventListener("click", () => pintar(false));
+      soloVisibles.addEventListener("change", () => pintar(true));
+      poRefreshBtn.addEventListener("click", cargar);
+
+      function unlockAdmin() {
+        document.body.classList.remove("admin-locked");
+        authLock.style.display = "none";
+        authLock.setAttribute("hidden", "");
+        cargar();
+      }
+
+      async function tryUnlock() {
+        const email = emailInput.value.trim();
+        const password = pinInput.value;
+        if (!email || !password) {
+          authError.textContent = "Ingresa correo y contrasena.";
+          return;
+        }
+        emailInput.disabled = true;
+        pinInput.disabled = true;
+        unlockBtn.disabled = true;
+        unlockBtn.textContent = "Validando...";
+        try {
+          const { error } = await SupabaseDB.getClient().auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          unlockAdmin();
+        } catch (error) {
+          authError.textContent = "Correo o contrasena incorrectos.";
+          pinInput.select();
+          emailInput.disabled = false;
+          pinInput.disabled = false;
+          unlockBtn.disabled = false;
+          unlockBtn.textContent = "Entrar";
+        }
+      }
+
+      async function checkSessionAndStart() {
+        try {
+          const { data } = await SupabaseDB.getClient().auth.getSession();
+          if (data?.session) unlockAdmin();
+          else emailInput.focus();
+        } catch (error) {
+          emailInput.focus();
+        }
+      }
+
+      unlockBtn?.addEventListener("click", tryUnlock);
+      pinInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") tryUnlock(); });
+      logoutBtn?.addEventListener("click", async () => {
+        if (!confirm("Cerrar sesion del panel admin?")) return;
+        await SupabaseDB.getClient().auth.signOut();
+        window.location.href = "./admin.html";
+      });
+
+      checkSessionAndStart();
+    </script>
+  </body>
+</html>
