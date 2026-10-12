@@ -248,6 +248,33 @@ async function borrarPedido(id) {
   }
 }
 
+async function fetchCajaConfig() {
+  const db = getClient();
+  const { data, error } = await db.from("caja_config").select("*").eq("id", 1).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+async function guardarCajaConfig(cambios) {
+  const db = getClient();
+  const { data, error } = await db
+    .from("caja_config")
+    .update({ ...cambios, actualizado_en: new Date().toISOString() })
+    .eq("id", 1)
+    .select();
+  if (error) throw error;
+  if (!data || data.length === 0) throw new Error("La tarifa no se guardó. Revisa que el script caja-malia-2026-10-11.sql esté aplicado.");
+}
+
+async function actualizarCajaPedido(id, cambios) {
+  const db = getClient();
+  const permitidos = ["envio_km", "envio_cobrado", "envio_costo", "otros_costos", "cobrado_en", "mercancia_pagada_en", "estado"];
+  const limpio = Object.fromEntries(Object.entries(cambios).filter(([k]) => permitidos.includes(k)));
+  const { data, error } = await db.from("pedidos").update(limpio).eq("id", id).select("id");
+  if (error) throw error;
+  if (!data || data.length === 0) throw new Error("El pedido no se actualizó en Supabase.");
+}
+
 async function fetchSyncLog(limite = 40) {
   const db = getClient();
   const { data, error } = await db
@@ -422,6 +449,9 @@ window.SupabaseDB = {
   fetchPedidos,
   actualizarEstadoPedido,
   borrarPedido,
+  fetchCajaConfig,
+  guardarCajaConfig,
+  actualizarCajaPedido,
   fetchSyncLog,
   fetchPriceHistory,
   fetchProductosPreciosProblematicos,

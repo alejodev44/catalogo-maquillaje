@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Malía Cosmetics | Caja</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" type="image/png" href="./assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./admin-styles.css?v=malia-2">
+    <style>
+      .caja-shell { max-width: 1100px; margin: 0 auto; padding: 28px 20px 80px; }
+      .caja-back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--wine); text-decoration: none; font-weight: 700; margin-bottom: 18px; }
+      .caja-back:hover { text-decoration: underline; }
+      .caja-head h1 { margin: 4px 0 8px; }
+      .caja-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; margin-top: 22px; }
+      .caja-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; box-shadow: 0 10px 28px rgba(50, 24, 28, .05); min-width: 0; }
+      .caja-card h2 { font-family: var(--font-display); font-size: 20px; margin: 0 0 4px; }
+      .caja-card .help { margin: 0 0 14px; }
+      .caja-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .caja-fields .wide { grid-column: 1 / -1; }
+      .caja-field { display: grid; gap: 5px; min-width: 0; }
+      .caja-field label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #a3606f; }
+      .caja-field input, .caja-field select { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--cream); font: inherit; }
+      .caja-row-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+      .caja-msg { font-size: 13px; color: var(--muted); }
+      .caja-msg.ok { color: var(--green); }
+      .caja-msg.err { color: var(--danger); }
+      .caja-quote { margin-top: 14px; padding: 14px 16px; border-radius: 12px; background: var(--blush-1); display: grid; gap: 4px; }
+      .caja-quote strong { font-family: var(--font-display); font-size: 28px; color: var(--wine); font-variant-numeric: lining-nums; }
+      .caja-quote span { font-size: 13px; color: var(--muted); }
+      .caja-period { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-top: 30px; }
+      .caja-period .caja-field { width: 170px; }
+      .caja-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+      .caja-stat { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; min-width: 0; }
+      .caja-stat span { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #a3606f; font-weight: 700; }
+      .caja-stat strong { display: block; font-family: var(--font-display); font-size: 22px; margin-top: 6px; color: var(--ink); font-variant-numeric: lining-nums tabular-nums; }
+      .caja-stat.main { background: var(--wine); border-color: var(--wine); }
+      .caja-stat.main span, .caja-stat.main strong { color: #fff; }
+      .caja-filter { display: flex; flex-wrap: wrap; gap: 8px; margin: 30px 0 12px; }
+      .caja-filter button { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 8px 14px; font: 600 13px var(--font-body); cursor: pointer; }
+      .caja-filter button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+      .caja-list { display: grid; gap: 14px; }
+      .caja-pedido { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+      .caja-pedido-top { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+      .caja-pedido-top .name { font-weight: 700; font-size: 16px; }
+      .caja-pedido-top .meta { font-size: 12.5px; color: var(--muted); margin-top: 3px; overflow-wrap: anywhere; }
+      .caja-badges { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-start; }
+      .caja-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: var(--blush-1); color: var(--wine); white-space: nowrap; }
+      .caja-badge.ok { background: #e9f4ed; color: var(--green); }
+      .caja-pedido-nums { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-top: 14px; align-items: end; }
+      .caja-pedido-nums .fixed span { display: block; font-size: 11px; color: var(--muted); }
+      .caja-pedido-nums .fixed b { font-size: 15px; }
+      .caja-pedido-nums .gan b { color: var(--wine); }
+      .caja-pedido-nums input { padding: 8px 10px; }
+      .caja-empty { text-align: center; padding: 40px 20px; color: var(--muted); background: #fff; border: 1px dashed var(--line); border-radius: 14px; }
+      .caja-maps { font-size: 12.5px; color: var(--wine); font-weight: 600; }
+      @media (max-width: 900px) {
+        .caja-grid { grid-template-columns: minmax(0, 1fr); }
+        .caja-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .caja-pedido-nums { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+      @media (pointer: coarse) { .caja-field input, .caja-field select { font-size: 16px; } }
+    </style>
+  </head>
+  <body class="admin-page admin-locked">
+    <section class="auth-lock" id="authLock">
+      <div class="auth-box">
+        <div class="brand auth-brand">
+          <span class="brand-mark logo-mark"><img src="./assets/malia-logo.png" alt="Malía Cosmetics"></span><span>Malía Cosmetics privado</span>
+        </div>
+        <h1>Inicia sesion</h1>
+        <p class="help">Este panel es solo para administrar el catálogo.</p>
+        <div class="field">
+          <label for="emailInput">Correo</label>
+          <input id="emailInput" type="email" autocomplete="username" placeholder="tu@correo.com">
+        </div>
+        <div class="field">
+          <label for="pinInput">Contrasena</label>
+          <input id="pinInput" type="password" autocomplete="current-password" placeholder="Contrasena">
+        </div>
+        <button class="button primary" id="unlockBtn">Entrar</button>
+        <p class="help auth-error" id="authError"></p>
+      </div>
+    </section>
+
+    <header class="topbar">
+      <div class="brand">
+        <img class="brand-logo" src="./assets/malia-logo.png" alt="Malía Cosmetics">
+      </div>
+      <div class="header-actions">
+        <a class="ghost-link" href="./admin.html">← Volver al panel</a>
+        <button class="button ghost" id="logoutBtn">Cerrar sesion</button>
+      </div>
+    </header>
+
+    <main class="caja-shell">
+      <a class="caja-back" href="./admin.html">← Volver al panel de administración</a>
+      <div class="caja-head">
+        <p class="eyebrow">Finanzas</p>
+        <h1>Caja Malía</h1>
+        <p class="help">Envío, costo y ganancia real de cada pedido. Al final del periodo copia el informe y pégalo en tu Caja FEROX.</p>
+      </div>
+
+      <div class="caja-grid">
+        <section class="caja-card">
+          <h2>Calcular un envío</h2>
+          <p class="help">Escribe la dirección o el barrio del cliente. Se mide la distancia por calle desde tu punto de salida.</p>
+          <div class="caja-fields">
+            <div class="caja-field wide"><label for="quoteDir">Dirección o barrio</label><input id="quoteDir" placeholder="Calle 57 # 13-20 o barrio Galerías"></div>
+            <div class="caja-field"><label for="quoteCiudad">Ciudad</label><input id="quoteCiudad" value="Bogotá"></div>
+            <div class="caja-field"><label for="quoteVenta">Valor de la compra (opcional)</label><input id="quoteVenta" inputmode="numeric" placeholder="Para el envío gratis"></div>
+          </div>
+          <div class="caja-row-actions">
+            <button type="button" class="button primary" id="quoteBtn">Calcular envío</button>
+            <span class="caja-msg" id="quoteMsg"></span>
+          </div>
+          <div class="caja-quote" id="quoteOut" hidden></div>
+        </section>
+
+        <section class="caja-card">
+          <h2>Tarifa de envío</h2>
+          <p class="help">Base Pibox (Picap) 2026: mínimo $8.000 los primeros 3 km. Ajusta el valor por km cuando cotices envíos reales.</p>
+          <div class="caja-fields">
+            <div class="caja-field"><label for="cfgBase">Tarifa base</label><input id="cfgBase" inputmode="numeric"></div>
+            <div class="caja-field"><label for="cfgIncl">Km incluidos</label><input id="cfgIncl" inputmode="decimal"></div>
+            <div class="caja-field"><label for="cfgKm">Valor por km adicional</label><input id="cfgKm" inputmode="numeric"></div>
+            <div class="caja-field"><label for="cfgRed">Redondear a</label><input id="cfgRed" inputmode="numeric"></div>
+            <div class="caja-field wide"><label for="cfgGratis">Envío gratis desde (0 = nunca)</label><input id="cfgGratis" inputmode="numeric"></div>
+            <div class="caja-field wide"><label for="cfgOrigen">Punto de salida</label><input id="cfgOrigen"></div>
+          </div>
+          <div class="caja-row-actions">
+            <button type="button" class="button" id="cfgSaveBtn">Guardar tarifa</button>
+            <span class="caja-msg" id="cfgMsg"></span>
+          </div>
+        </section>
+      </div>
+
+      <div class="caja-period">
+        <div class="caja-field"><label for="desdeInput">Desde</label><input id="desdeInput" type="date"></div>
+        <div class="caja-field"><label for="hastaInput">Hasta</label><input id="hastaInput" type="date"></div>
+        <button type="button" class="button primary" id="informeBtn">Copiar informe para Caja FEROX</button>
+        <span class="caja-msg" id="informeMsg"></span>
+      </div>
+      <div class="caja-stats" id="cajaStats"></div>
+
+      <div class="caja-filter" id="cajaFilter">
+        <button type="button" data-filtro="pendientes" aria-pressed="true">Por cobrar</button>
+        <button type="button" data-filtro="cobrados" aria-pressed="false">Cobrados en el periodo</button>
+        <button type="button" data-filtro="todos" aria-pressed="false">Todos</button>
+      </div>
+      <div class="caja-list" id="cajaList"><p class="help">Cargando...</p></div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="./supabase.js?v=malia-6"></script>
+    <script src="./app.js?v=malia-5"></script>
+    <script>
+      const authLock = document.querySelector("#authLock");
+      const emailInput = document.querySelector("#emailInput");
+      const pinInput = document.querySelector("#pinInput");
+      const unlockBtn = document.querySelector("#unlockBtn");
+      const authError = document.querySelector("#authError");
+      const logoutBtn = document.querySelector("#logoutBtn");
+      const $ = (s) => document.querySelector(s);
+      const pesos = (v) => CatalogData.formatMoney(Math.round(Number(v || 0)));
+
+      let config = null;
+      let pedidos = [];
+      let filtro = "pendientes";
+      const OSRM_ROUTE = "https://router.project-osrm.org/route/v1/driving/";
+      const NOMINATIM = "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=co&q=";
+
+      function esc(v) {
+        return String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+      }
+
+      function numero(v) {
+        const s = String(v ?? "").replace(/[^\d,.-]/g, "");
+        if (/[.,]\d{3}(\D|$)/.test(s)) return Number(s.replace(/[.,]/g, "")) || 0;
+        return Number(s.replace(",", ".")) || 0;
+      }
+
+      function hoyIso() {
+        const d = new Date();
+        return new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      }
+
+      function tarifa(km, venta = 0) {
+        if (!config) return { costo: 0, cobrar: 0 };
+        const base = Number(config.base), incl = Number(config.km_incluidos), porKm = Number(config.valor_km), red = Number(config.redondeo) || 100;
+        const bruto = km <= incl ? base : base + Math.ceil(km - incl) * porKm;
+        const costo = Math.ceil(bruto / red) * red;
+        const gratis = Number(config.envio_gratis_desde) > 0 && venta >= Number(config.envio_gratis_desde);
+        return { costo, cobrar: gratis ? 0 : costo, gratis };
+      }
+
+      const VIAS = [
+        [/^(avenida\s+calle|av\.?\s*calle|ac|calle|cll|clle|cl)\b\.?/i, "C"],
+        [/^(avenida\s+carrera|av\.?\s*carrera|ak|carrera|cra|kra|kr|cr)\b\.?/i, "K"],
+        [/^(diagonal|diag|dg)\b\.?/i, "C"],
+        [/^(transversal|trans|tv|tr)\b\.?/i, "K"]
+      ];
+      let crucesPromesa = null;
+      function cargarCruces() {
+        if (!crucesPromesa) crucesPromesa = fetch("./assets/data/cruces-bogota.json").then((r) => r.json()).catch(() => null);
+        return crucesPromesa;
+      }
+
+      function claveVia(fam, num, letra, bis, sufijo) {
+        return `${fam}${Number(num)}${letra}${bis ? "b" : ""}${sufijo}`;
+      }
+
+      function parseDireccion(dir) {
+        const s = String(dir || "").normalize("NFD").replace(/[̀-ͯ]/g, "").trim().replace(/\s+/g, " ");
+        for (const [re, fam] of VIAS) {
+          const m = s.match(re);
+          if (!m) continue;
+          const r = s.slice(m[0].length).trim().match(/^(\d+)\s*([a-z](?![a-z]))?\s*(bis)?\s*([a-z](?![a-z]))?\s*(sur|este)?\s*(?:#|n[oº°]\.?|numero)?\s*(\d+)\s*([a-z](?![a-z]))?\s*(bis)?\s*([a-z](?![a-z]))?\s*(sur|este)?\s*-?\s*\d*\s*(sur|este)?/i);
+          if (!r) return null;
+          const sufijos = [r[5], r[10], r[11]].map((x) => (x || "").toLowerCase());
+          const otra = fam === "C" ? "K" : "C";
+          const sufDe = (f) => (f === "C" ? (sufijos.includes("sur") ? "s" : "") : (sufijos.includes("este") ? "e" : ""));
+          const a = { fam, num: r[1], letra: (r[2] || r[4] || "").toUpperCase(), bis: !!r[3] };
+          const b = { fam: otra, num: r[6], letra: (r[7] || r[9] || "").toUpperCase(), bis: !!r[8] };
+          const calle = fam === "C" ? a : b, carrera = fam === "C" ? b : a;
+          return { calle: { ...calle, suf: sufDe("C") }, carrera: { ...carrera, suf: sufDe("K") } };
+        }
+        return null;
+      }
+
+      async function ubicarPorCruce(direccion) {
+        const p = parseDireccion(direccion);
+        if (!p) return null;
+        const idx = await cargarCruces();
+        if (!idx) return null;
+        const dec = (v) => ({ lat: v[0] / 1e5 + 4.4, lon: v[1] / 1e5 - 74.3 });
+        const c = p.calle, k = p.carrera;
+        const exacta = `${claveVia("C", c.num, c.letra, c.bis, c.suf)}|${claveVia("K", k.num, k.letra, k.bis, k.suf)}`;
+        const nombre = `Calle ${c.num}${c.letra}${c.bis ? " Bis" : ""}${c.suf === "s" ? " Sur" : ""} con Carrera ${k.num}${k.letra}${k.bis ? " Bis" : ""}${k.suf === "e" ? " Este" : ""}`;
+        if (idx.x[exacta]) return { ...dec(idx.x[exacta]), nombre, aproximado: false };
+        const cercana = `${claveVia("C", c.num, "", false, c.suf)}|${claveVia("K", k.num, "", false, k.suf)}`;
+        if (idx.x[cercana]) return { ...dec(idx.x[cercana]), nombre: nombre + " (cuadra cercana)", aproximado: true };
+        const [ma, mo] = idx.m;
+        const cn = Number(c.num) * (c.suf === "s" ? -1 : 1), kn = Number(k.num) * (k.suf === "e" ? -1 : 1);
+        return { lat: ma[0] + ma[1] * cn + ma[2] * kn, lon: mo[0] + mo[1] * cn + mo[2] * kn, nombre: nombre + " (estimado por la cuadrícula)", aproximado: true };
+      }
+
+      const geoCache = new Map();
+      async function geocodificar(direccion, ciudad) {
+        const ciudadTxt = ciudad === "" ? "" : (ciudad || "Bogotá").trim();
+        const esBogota = !ciudadTxt || /bogot/i.test(ciudadTxt);
+        if (esBogota && direccion) {
+          const cruce = await ubicarPorCruce(direccion);
+          if (cruce) return cruce;
+        }
+        const q = [direccion, ciudadTxt, "Colombia"].filter(Boolean).join(", ");
+        if (geoCache.has(q)) return geoCache.get(q);
+        const res = await fetch(NOMINATIM + encodeURIComponent(q), { headers: { "Accept-Language": "es" } });
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (!data || !data[0]) return null;
+        const punto = { lat: Number(data[0].lat), lon: Number(data[0].lon), nombre: data[0].display_name, aproximado: data[0].type !== "house" };
+        geoCache.set(q, punto);
+        return punto;
+      }
+
+      async function distanciaKm(destino) {
+        try {
+          const res = await fetch(`${OSRM_ROUTE}${config.origen_lon},${config.origen_lat};${destino.lon},${destino.lat}?overview=false`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.routes && data.routes[0]) return data.routes[0].distance / 1000;
+          }
+        } catch (_e) {}
+        const rad = Math.PI / 180;
+        const dLat = (destino.lat - config.origen_lat) * rad, dLon = (destino.lon - config.origen_lon) * rad;
+        const h = Math.sin(dLat / 2) ** 2 + Math.cos(config.origen_lat * rad) * Math.cos(destino.lat * rad) * Math.sin(dLon / 2) ** 2;
+        return 6371 * 2 * Math.asin(Math.sqrt(h)) * 1.35;
+      }
+
+      function mapsLink(direccion, ciudad) {
+        const destino = encodeURIComponent(`${direccion || ""}, ${ciudad || "Bogotá"}, Colombia`);
+        return `https://www.google.com/maps/dir/?api=1&origin=${config.origen_lat},${config.origen_lon}&destination=${destino}&travelmode=driving`;
+      }
+
+      async function calcularEnvio(direccion, ciudad, venta) {
+        const destino = await geocodificar(direccion, ciudad);
+        if (!destino) throw new Error("No encontré esa dirección en el mapa. Prueba con el barrio o mide la distancia en Google Maps y escribe los km.");
+        const km = Math.round((await distanciaKm(destino)) * 10) / 10;
+        return { km, destino, ...tarifa(km, venta) };
+      }
+
+      function totalesPedido(p) {
+        const items = Array.isArray(p.items) ? p.items : [];
+        let venta = 0, costo = 0;
+        for (const it of items) {
+          const cant = Number(it.cantidad || 1);
+          venta += Number(it.subtotal || Number(it.precio || 0) * cant);
+          costo += Number(it.precio_mayorista || 0) * cant;
+        }
+        if (Number(p.total)) venta = Number(p.total);
+        const envioCobrado = Number(p.envio_cobrado || 0), envioCosto = Number(p.envio_costo || 0), otros = Number(p.otros_costos || 0);
+        return { venta, costo, envioCobrado, envioCosto, otros, ganancia: venta + envioCobrado - costo - envioCosto - otros };
+      }
+
+      function enPeriodo(fecha) {
+        if (!fecha) return false;
+        const d = String(fecha).slice(0, 10);
+        return d >= $("#desdeInput").value && d <= $("#hastaInput").value;
+      }
+
+      function fechaCorta(f) {
+        return new Date(f).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" });
+      }
+
+      function cobradosPeriodo() {
+        return pedidos.filter((p) => p.estado !== "cancelado" && p.cobrado_en && enPeriodo(p.cobrado_en));
+      }
+
+      function resumen() {
+        const lista = cobradosPeriodo();
+        const r = { pedidos: lista.length, ventas: 0, envioCobrado: 0, costoMercancia: 0, costoEnvio: 0, otros: 0, ganancia: 0 };
+        for (const p of lista) {
+          const t = totalesPedido(p);
+          r.ventas += t.venta; r.envioCobrado += t.envioCobrado; r.costoMercancia += t.costo; r.costoEnvio += t.envioCosto; r.otros += t.otros; r.ganancia += t.ganancia;
+        }
+        return r;
+      }
+
+      function pintarStats() {
+        const r = resumen();
+        const pendientes = pedidos.filter((p) => p.estado !== "cancelado" && !p.cobrado_en);
+        const porCobrar = pendientes.reduce((a, p) => { const t = totalesPedido(p); return a + t.venta + t.envioCobrado; }, 0);
+        const stats = [
+          ["Ganancia del periodo", pesos(r.ganancia), "main"],
+          ["Vendido", pesos(r.ventas + r.envioCobrado), ""],
+          ["Costos", pesos(r.costoMercancia + r.costoEnvio + r.otros), ""],
+          ["Por cobrar", `${pesos(porCobrar)} · ${pendientes.length}`, ""]
+        ];
+        $("#cajaStats").innerHTML = stats.map(([k, v, c]) => `<div class="caja-stat ${c}"><span>${k}</span><strong>${esc(v)}</strong></div>`).join("");
+      }
+
+      function pedidoHtml(p) {
+        const t = totalesPedido(p);
+        const fecha = fechaCorta(p.creado_en);
+        const badges = [
+          p.cobrado_en ? `<span class="caja-badge ok">Cobrado ${esc(fechaCorta(p.cobrado_en))}</span>` : '<span class="caja-badge">Por cobrar</span>',
+          p.mercancia_pagada_en ? '<span class="caja-badge ok">Mercancía pagada</span>' : "",
+          p.envio_km ? `<span class="caja-badge">${esc(String(p.envio_km).replace(".", ","))} km</span>` : ""
+        ].join("");
+        return `
+          <article class="caja-pedido" data-id="${esc(p.id)}">
+            <div class="caja-pedido-top">
+              <div>
+                <div class="name">${esc(p.nombre || "Cliente")}</div>
+                <div class="meta">${esc(fecha)} · ${esc([p.direccion, p.ciudad].filter(Boolean).join(", ") || "Sin dirección")}${p.direccion ? ` · <a class="caja-maps" href="${esc(mapsLink(p.direccion, p.ciudad))}" target="_blank" rel="noreferrer">Ver ruta ↗</a>` : ""}</div>
+              </div>
+              <div class="caja-badges">${badges}</div>
+            </div>
+            <div class="caja-pedido-nums">
+              <div class="fixed"><span>Venta</span><b>${esc(pesos(t.venta))}</b></div>
+              <div class="fixed"><span>Mercancía</span><b>${esc(pesos(t.costo))}</b></div>
+              <div class="caja-field"><label for="ec-${esc(p.id)}">Envío cobrado</label><input id="ec-${esc(p.id)}" data-campo="envio_cobrado" inputmode="numeric" value="${esc(t.envioCobrado || "")}" placeholder="0"></div>
+              <div class="caja-field"><label for="ep-${esc(p.id)}">Te cuesta</label><input id="ep-${esc(p.id)}" data-campo="envio_costo" inputmode="numeric" value="${esc(t.envioCosto || "")}" placeholder="0"></div>
+              <div class="caja-field"><label for="ot-${esc(p.id)}">Otros</label><input id="ot-${esc(p.id)}" data-campo="otros_costos" inputmode="numeric" value="${esc(t.otros || "")}" placeholder="Empaque"></div>
+              <div class="fixed gan"><span>Ganancia</span><b>${esc(pesos(t.ganancia))}</b></div>
+            </div>
+            <div class="caja-row-actions">
+              <button type="button" class="button" data-accion="envio">Calcular envío</button>
+              <button type="button" class="button" data-accion="guardar">Guardar</button>
+              <button type="button" class="button ${p.cobrado_en ? "ghost" : "primary"}" data-accion="cobro">${p.cobrado_en ? "Quitar cobro" : "Marcar cobrado"}</button>
+              <button type="button" class="button ghost" data-accion="mercancia">${p.mercancia_pagada_en ? "Mercancía sin pagar" : "Pagué la mercancía"}</button>
+              <span class="caja-msg" data-msg></span>
+            </div>
+          </article>`;
+      }
+
+      function pintarLista() {
+        let lista = pedidos.filter((p) => p.estado !== "cancelado");
+        if (filtro === "pendientes") lista = lista.filter((p) => !p.cobrado_en);
+        if (filtro === "cobrados") lista = cobradosPeriodo();
+        $("#cajaList").innerHTML = lista.length ? lista.map(pedidoHtml).join("") : `<div class="caja-empty">${filtro === "pendientes" ? "No hay pedidos por cobrar." : "No hay pedidos en esta vista."}</div>`;
+        pintarStats();
+      }
+
+      function pintarConfig() {
+        $("#cfgBase").value = config.base;
+        $("#cfgIncl").value = config.km_incluidos;
+        $("#cfgKm").value = config.valor_km;
+        $("#cfgRed").value = config.redondeo;
+        $("#cfgGratis").value = config.envio_gratis_desde;
+        $("#cfgOrigen").value = config.origen_nombre;
+      }
+
+      async function cargar() {
+        try {
+          const [cfg, lista] = await Promise.all([SupabaseDB.fetchCajaConfig(), SupabaseDB.fetchPedidos()]);
+          if (!cfg) throw new Error("Falta aplicar el script docs/sql/caja-malia-2026-10-11.sql en Supabase.");
+          config = cfg;
+          pedidos = lista;
+          pintarConfig();
+          pintarLista();
+        } catch (error) {
+          $("#cajaList").innerHTML = `<div class="caja-empty">No se pudo cargar la caja: ${esc(error.message || String(error))}</div>`;
+        }
+      }
+
+      function mensaje(el, texto, tipo = "") {
+        el.textContent = texto;
+        el.className = `caja-msg ${tipo}`;
+      }
+
+      $("#quoteBtn").addEventListener("click", async () => {
+        const msg = $("#quoteMsg"), out = $("#quoteOut");
+        const dir = $("#quoteDir").value.trim();
+        if (!dir) { mensaje(msg, "Escribe una dirección o un barrio.", "err"); return; }
+        if (!config) return;
+        mensaje(msg, "Buscando en el mapa...");
+        out.hidden = true;
+        try {
+          const r = await calcularEnvio(dir, $("#quoteCiudad").value, numero($("#quoteVenta").value));
+          mensaje(msg, "");
+          out.hidden = false;
+          out.innerHTML = `<strong>${esc(pesos(r.cobrar))}</strong><span>${esc(String(r.km).replace(".", ","))} km por calle${r.gratis ? " · envío gratis por el valor de la compra (te cuesta " + esc(pesos(r.costo)) + ")" : ""}</span><span>${esc(r.destino.nombre)}${r.destino.aproximado ? " · ubicación aproximada, confirma con la ruta" : ""}</span><span><a class="caja-maps" href="${esc(mapsLink(dir, $("#quoteCiudad").value))}" target="_blank" rel="noreferrer">Ver ruta en Google Maps ↗</a></span>`;
+        } catch (error) {
+          mensaje(msg, error.message, "err");
+        }
+      });
+
+      $("#cfgSaveBtn").addEventListener("click", async () => {
+        const msg = $("#cfgMsg");
+        const cambios = {
+          base: Math.round(numero($("#cfgBase").value)),
+          km_incluidos: numero($("#cfgIncl").value),
+          valor_km: Math.round(numero($("#cfgKm").value)),
+          redondeo: Math.max(1, Math.round(numero($("#cfgRed").value))),
+          envio_gratis_desde: Math.round(numero($("#cfgGratis").value)),
+          origen_nombre: $("#cfgOrigen").value.trim() || config.origen_nombre
+        };
+        if (!(cambios.base > 0) || !(cambios.valor_km >= 0)) { mensaje(msg, "Revisa la tarifa base y el valor por km.", "err"); return; }
+        try {
+          if (cambios.origen_nombre !== config.origen_nombre) {
+            mensaje(msg, "Ubicando el punto de salida...");
+            const punto = await geocodificar(cambios.origen_nombre, "");
+            if (!punto) throw new Error("No encontré ese punto de salida. Prueba con barrio y localidad.");
+            cambios.origen_lat = punto.lat;
+            cambios.origen_lon = punto.lon;
+          }
+          await SupabaseDB.guardarCajaConfig(cambios);
+          config = { ...config, ...cambios };
+          mensaje(msg, "Tarifa guardada.", "ok");
+        } catch (error) {
+          mensaje(msg, error.message, "err");
+        }
+      });
+
+      $("#cajaFilter").addEventListener("click", (e) => {
+        const b = e.target.closest("button[data-filtro]");
+        if (!b) return;
+        filtro = b.dataset.filtro;
+        document.querySelectorAll("#cajaFilter button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+        pintarLista();
+      });
+
+      ["#desdeInput", "#hastaInput"].forEach((s) => $(s).addEventListener("change", pintarLista));
+
+      $("#cajaList").addEventListener("click", async (e) => {
+        const btn = e.target.closest("button[data-accion]");
+        if (!btn) return;
+        const card = btn.closest(".caja-pedido");
+        const p = pedidos.find((x) => String(x.id) === card.dataset.id);
+        if (!p) return;
+        const msg = card.querySelector("[data-msg]");
+        const leer = (campo) => Math.round(numero(card.querySelector(`[data-campo="${campo}"]`).value));
+        btn.disabled = true;
+        try {
+          let cambios = null;
+          if (btn.dataset.accion === "envio") {
+            if (!p.direccion) throw new Error("Este pedido no tiene dirección.");
+            mensaje(msg, "Buscando en el mapa...");
+            const r = await calcularEnvio(p.direccion, p.ciudad, totalesPedido(p).venta);
+            card.querySelector('[data-campo="envio_cobrado"]').value = r.cobrar;
+            card.querySelector('[data-campo="envio_costo"]').value = r.costo;
+            p.envio_km = r.km;
+            mensaje(msg, `${String(r.km).replace(".", ",")} km${r.destino.aproximado ? " (aproximado, revisa la ruta)" : ""}. Toca Guardar.`, "ok");
+          } else if (btn.dataset.accion === "guardar") {
+            cambios = { envio_cobrado: leer("envio_cobrado"), envio_costo: leer("envio_costo"), otros_costos: leer("otros_costos"), envio_km: p.envio_km ?? null };
+          } else if (btn.dataset.accion === "cobro") {
+            cambios = { envio_cobrado: leer("envio_cobrado"), envio_costo: leer("envio_costo"), otros_costos: leer("otros_costos"), envio_km: p.envio_km ?? null, cobrado_en: p.cobrado_en ? null : new Date().toISOString() };
+            if (!p.cobrado_en && p.estado !== "confirmado") cambios.estado = "confirmado";
+          } else if (btn.dataset.accion === "mercancia") {
+            cambios = { mercancia_pagada_en: p.mercancia_pagada_en ? null : new Date().toISOString() };
+          }
+          if (cambios) {
+            await SupabaseDB.actualizarCajaPedido(p.id, cambios);
+            Object.assign(p, cambios);
+            pintarLista();
+          }
+        } catch (error) {
+          mensaje(msg, error.message || String(error), "err");
+        } finally {
+          btn.disabled = false;
+        }
+      });
+
+      $("#informeBtn").addEventListener("click", async () => {
+        const r = resumen();
+        const informe = {
+          tipo: "informe-malia",
+          desde: $("#desdeInput").value,
+          hasta: $("#hastaInput").value,
+          pedidos: r.pedidos,
+          ventas: Math.round(r.ventas),
+          envioCobrado: Math.round(r.envioCobrado),
+          costoMercancia: Math.round(r.costoMercancia),
+          costoEnvio: Math.round(r.costoEnvio),
+          otros: Math.round(r.otros),
+          ganancia: Math.round(r.ganancia)
+        };
+        const texto = JSON.stringify(informe);
+        try {
+          await navigator.clipboard.writeText(texto);
+          mensaje($("#informeMsg"), `Copiado: ${r.pedidos} pedidos, ganancia ${pesos(r.ganancia)}. Pégalo en Caja FEROX → Malía.`, "ok");
+        } catch (_e) {
+          window.prompt("Copia este informe:", texto);
+        }
+      });
+
+      function iniciarFechas() {
+        const hoy = hoyIso();
+        $("#desdeInput").value = hoy.slice(0, 8) + "01";
+        $("#hastaInput").value = hoy;
+      }
+
+      function unlockAdmin() {
+        document.body.classList.remove("admin-locked");
+        authLock.style.display = "none";
+        authLock.setAttribute("hidden", "");
+        iniciarFechas();
+        cargar();
+      }
+
+      async function tryUnlock() {
+        const email = emailInput.value.trim();
+        const password = pinInput.value;
+        if (!email || !password) {
+          authError.textContent = "Ingresa correo y contrasena.";
+          return;
+        }
+        emailInput.disabled = true;
+        pinInput.disabled = true;
+        unlockBtn.disabled = true;
+        unlockBtn.textContent = "Validando...";
+        try {
+          const { error } = await SupabaseDB.getClient().auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          unlockAdmin();
+        } catch (error) {
+          authError.textContent = "Correo o contrasena incorrectos.";
+          pinInput.select();
+          emailInput.disabled = false;
+          pinInput.disabled = false;
+          unlockBtn.disabled = false;
+          unlockBtn.textContent = "Entrar";
+        }
+      }
+
+      async function checkSessionAndStart() {
+        try {
+          const { data } = await SupabaseDB.getClient().auth.getSession();
+          if (data?.session) unlockAdmin();
+          else emailInput.focus();
+        } catch (error) {
+          emailInput.focus();
+        }
+      }
+
+      unlockBtn?.addEventListener("click", tryUnlock);
+      pinInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") tryUnlock(); });
+      logoutBtn?.addEventListener("click", async () => {
+        if (!confirm("Cerrar sesion del panel admin?")) return;
+        await SupabaseDB.getClient().auth.signOut();
+        window.location.href = "./admin.html";
+      });
+
+      checkSessionAndStart();
+    </script>
+  </body>
+</html>
